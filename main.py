@@ -81,9 +81,9 @@ if __name__ == '__main__':
             interaction_count += 1
             account = Account.from_key(i)
             logger.debug(
-                f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{private_key.strip()}')
+                f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{i}')
             start_time = time.time()
-            interacte(private_key.strip(), rpc_url, proxy_url, solver_provider, client_key)
+            interacte(i, rpc_url, proxy_url, solver_provider, client_key)
             end_time = time.time()
-            logger.success(f'交互完成，账户为：{private_key.strip()},用时:{end_time - start_time}')
+            logger.success(f'交互完成，账户为：{i},用时:{end_time - start_time}')
             logger.debug('\n\n\n\n\n')
