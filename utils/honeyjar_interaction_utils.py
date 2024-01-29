@@ -1,5 +1,5 @@
 import time
-
+import random
 from eth_account import Account
 from loguru import logger
 
@@ -32,7 +32,8 @@ def honeyjar_interacte_(private_key, rpc_url):
         honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
         if honey_balance < 42 * 10 ** 17:
             for i in range(10):
-                result = bera.bex_swap(int(2 * 10 ** 16), wbear_address, honey_address)
+                random_amount = round(random.uniform(0.10, 0.20), 2)
+                result = bera.bex_swap(int(random_amount * 10 ** 18), wbear_address, honey_address)
                 if result:
                     break
         logger.debug(approve_result)
