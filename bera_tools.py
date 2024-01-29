@@ -212,6 +212,8 @@ class BeraChainTools(object):
 
         response = self.session.get('https://artio-80085-dex-router.berachain.com/dex/route', params=params,
                                     headers=headers)
+        #print(params)
+        #print(response.text)
         assert response.status_code == 200
         swaps_list = response.json()['steps']
         swaps = list()
@@ -221,7 +223,8 @@ class BeraChainTools(object):
                 assetIn=self.w3.to_checksum_address(info['assetIn']),
                 amountIn=int(info['amountIn']),
                 assetOut=self.w3.to_checksum_address(info['assetOut']),
-                amountOut=0 if index + 1 != len(swaps_list) else int(int(info['amountOut']) * 0.5),
+                # amountOut=0 if index + 1 != len(swaps_list) else int(int(info['amountOut']) * 0.4),
+                amountOut=0,
                 userData=b''))
         if asset_in_address.lower() == wbear_address.lower():
             swaps[0]['assetIn'] = zero_address
