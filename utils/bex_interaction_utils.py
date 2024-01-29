@@ -1,6 +1,6 @@
 from eth_account import Account
 from loguru import logger
-
+import random
 from bera_tools import BeraChainTools
 from config.address_config import (
     usdc_address, wbear_address, weth_address, bex_approve_liquidity_address,
@@ -22,7 +22,8 @@ def bex_interacte(private_key, rpc_url):
                 print("已兑换过usdc")
                 break
             print('usdc_balance', usdc_balance)
-            result = bera.bex_swap(int(bera_balance * 0.2), wbear_address, usdc_address)
+            random_amount = round(random.uniform(0.10, 0.20), 2)
+            result = bera.bex_swap(int(bera_balance * random_amount), wbear_address, usdc_address)
             if result:
                 logger.success(f'bex 使用bera交换usdc成功！！！,{result}')
                 break
@@ -40,7 +41,8 @@ def bex_interacte(private_key, rpc_url):
                 print("已兑换过weth")
                 break
             print('weth_balance', weth_balance)
-            result = bera.bex_swap(int(bera_balance * 0.2), wbear_address, weth_address)
+            random_amount = round(random.uniform(0.10, 0.20), 2)
+            result = bera.bex_swap(int(bera_balance * random_amount), wbear_address, weth_address)
             if result:
                 logger.success(f'bex 使用bera交换weth成功！！！,{result}')
                 break

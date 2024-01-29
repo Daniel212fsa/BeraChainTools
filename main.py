@@ -19,6 +19,11 @@ def interacte(private_key, rpc_url, proxy_url, solver_provider, client_key):
     # step1: 领水
     bera = BeraChainTools(private_key=private_key, client_key=client_key, solver_provider=solver_provider,
                           rpc_url=rpc_url)
+    has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
+    if has_mint:
+        print("无需重复交互")
+        return
+
     for i in range(3):
         balance = bera.get_balance()
         print("测试币余额", balance)
@@ -67,20 +72,18 @@ if __name__ == '__main__':
         generate_wallet(1, rpc_url, proxy_url, solver_provider, client_key, file_path)
     else:
         interaction_count = 0  # 初始化交互计数器
+        private_keys = []
         with open(file_path, 'r') as file:
-
-            # 逐行读取文件
-            k = 0
             for private_key in file:
-                k += 1
-                if k > 4:
-                    interaction_count += 1  # 每次开始交互时增加计数器
-                    account = Account.from_key(private_key.strip())
-                    logger.debug(
-                        f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{private_key.strip()}')
-                    start_time = time.time()
-                    interacte(private_key.strip(), rpc_url, proxy_url, solver_provider, client_key)
-                    end_time = time.time()
-                    logger.success(f'交互完成，账户为：{private_key.strip()},用时:{end_time-start_time}')
-                    logger.debug('\n\n\n\n\n')
-                    break
+                private_keys.append(private_key.strip())
+        random.shuffle(private_keys)
+        for i in private_keys:
+            interaction_count += 1
+            account = Account.from_key(i)
+            logger.debug(
+                f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{private_key.strip()}')
+            start_time = time.time()
+            interacte(private_key.strip(), rpc_url, proxy_url, solver_provider, client_key)
+            end_time = time.time()
+            logger.success(f'交互完成，账户为：{private_key.strip()},用时:{end_time - start_time}')
+            logger.debug('\n\n\n\n\n')
