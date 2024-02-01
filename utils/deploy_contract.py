@@ -18,6 +18,7 @@ def deploy_contract(private_key, rpc_url):
 def deploy_contract_(private_key, rpc_url):
     try:
         account = Account.from_key(private_key)
+        account_address = account.address
         bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)
         # 安装0.4.18 版本编译器
         install_solc('0.4.18')
@@ -29,10 +30,10 @@ def deploy_contract_(private_key, rpc_url):
         # 部署合约
         result = bera.deploy_contract(code, '0.4.18')
         # logger.debug(result)
-        logger.success(f'部署合约成功,{result}')
+        logger.success(f'{account_address},部署合约成功,{result}')
         logger.debug('-------------------------------------------------------------------------------------')
         return True
     except Exception as e:
-        logger.error(f'部署合约失败，{e}')
+        logger.error(f'{account_address},部署合约失败，{e}')
         time.sleep(5)
     return False
