@@ -13,9 +13,13 @@ from utils.honeyjar_interaction_utils import honeyjar_interacte
 from utils.waters_utils import generate_wallet
 from bera_tools import BeraChainTools
 from utils.waters_utils import get_proxy
+import concurrent.futures
+from functools import partial
 
 
-def interacte(private_key, rpc_url, proxy_url, solver_provider, client_key):
+def interacte(arg):
+    private_key, rpc_url, proxy_url, solver_provider, client_key = arg
+    account = Account.from_key(private_key)
     # step1: 领水
     bera = BeraChainTools(private_key=private_key, client_key=client_key, solver_provider=solver_provider,
                           rpc_url=rpc_url)
@@ -72,18 +76,21 @@ if __name__ == '__main__':
         generate_wallet(1, rpc_url, proxy_url, solver_provider, client_key, file_path)
     else:
         interaction_count = 0  # 初始化交互计数器
-        private_keys = []
+        args = []
         with open(file_path, 'r') as file:
             for private_key in file:
-                private_keys.append(private_key.strip())
-        random.shuffle(private_keys)
-        for i in private_keys:
-            interaction_count += 1
-            account = Account.from_key(i)
-            logger.debug(
-                f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{i}')
-            start_time = time.time()
-            interacte(i, rpc_url, proxy_url, solver_provider, client_key)
-            end_time = time.time()
-            logger.success(f'交互完成，账户为：{i},用时:{end_time - start_time}')
-            logger.debug('\n\n\n\n\n')
+                args.append([private_key.strip(), rpc_url, proxy_url, solver_provider, client_key])
+        random.shuffle(args)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            # 将任务提交给线程池
+            results = list(executor.map(interacte, args))
+        # for i in private_keys:
+        #     interaction_count += 1
+        #     account = Account.from_key(i)
+        #     logger.debug(
+        #         f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{i}')
+        #     start_time = time.time()
+        #     interacte(i, rpc_url, proxy_url, solver_provider, client_key)
+        #     end_time = time.time()
+        #     logger.success(f'交互完成，账户为：{i},用时:{end_time - start_time}')
+        #     logger.debug('\n\n\n\n\n')
