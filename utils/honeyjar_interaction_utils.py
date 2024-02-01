@@ -52,4 +52,4 @@ def honeyjar_interacte_(private_key, rpc_url):
     except Exception as e:
         logger.error(f'0xhoneyjar 交互失败，{e}')
         # time.sleep(5)
-    return False
+        return False
