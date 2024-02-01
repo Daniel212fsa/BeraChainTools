@@ -28,6 +28,7 @@ def honeyjar_interacte_(private_key, rpc_url):
             return True
 
         honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
+        logger.debug(f'honey_balance:{honey_balance / 10 ** 18}')
         approve_result = bera.approve_token(ooga_booga_address, 5 * 10 ** 18, honey_address)
         if approve_result:
             if honey_balance < 42 * 10 ** 17:

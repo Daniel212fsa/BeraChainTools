@@ -17,11 +17,11 @@ def swap_usdc(account, bera):
             if usdc_balance > 0:
                 logger.success("已兑换过usdc!")
                 break
-            logger.debug(f'usdc_balance,{usdc_balance}')
+            logger.debug(f'usdc_balance,{usdc_balance / 10 ** 18}')
             random_amount = round(random.uniform(0.10, 0.20), 2)
             result = bera.bex_swap(int(bera_balance * random_amount), wbear_address, usdc_address)
             usdc_balance_new = bera.usdc_contract.functions.balanceOf(account.address).call()
-            print('usdc_balance', usdc_balance, 'usdc_balance_new', usdc_balance_new)
+            logger.debug(f'usdc_balance:{usdc_balance / 10 ** 18},usdc_balance_new:{usdc_balance_new / 10 ** 18}')
             if result:
                 logger.success(f'bex 使用bera交换usdc成功,{result}')
                 break
@@ -37,14 +37,14 @@ def swap_weth(account, bera):
             # bex 使用bera交换weth
             bera_balance = bera.w3.eth.get_balance(account.address)
             weth_balance = bera.weth_contract.functions.balanceOf(account.address).call()
-            logger.debug(f'weth_balance,{weth_balance}')
             if weth_balance > 0:
                 logger.success("已兑换过weth!")
                 break
+            logger.debug(f'weth_balance:{weth_balance}')
             random_amount = round(random.uniform(0.10, 0.20), 2)
             result = bera.bex_swap(int(bera_balance * random_amount), wbear_address, weth_address)
             weth_balance_new = bera.weth_contract.functions.balanceOf(account.address).call()
-            print('weth_balance', weth_balance, 'weth_balance_new', weth_balance_new)
+            logger.debug(f'weth_balance:{weth_balance / 10 ** 18},weth_balance_new:{weth_balance_new / 10 ** 18}')
             if result:
                 logger.success(f'bex 使用bera交换weth成功,{result}')
                 break
