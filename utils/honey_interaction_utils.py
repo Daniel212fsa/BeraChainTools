@@ -1,5 +1,5 @@
 import time
-
+import random
 from eth_account import Account
 from loguru import logger
 
@@ -18,29 +18,31 @@ def honey_interacte_(private_key, rpc_url):
     bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)
 
     try:
-        # 授权usdc
         logger.debug('STGUSDC转换HONEY开始')
-        approve_result = bera.approve_token(honey_swap_address, int("0x" + "f" * 64, 16), usdc_address)
-        # logger.debug(approve_result)
-
-        # 使用usdc mint honey
         usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
-        result = bera.honey_mint(int(usdc_balance * 0.5))
-        # logger.debug(result)
-        logger.success(f'STGUSDC转换HONEY成功,{result}')
+        random_amount = round(random.uniform(0.70, 0.90), 2)
+        amount = int(usdc_balance * random_amount)
+        approve_result = bera.approve_token(honey_swap_address, amount, usdc_address)
+        if approve_result:
+            result = bera.honey_mint(amount)
+            logger.success(f'STGUSDC转换HONEY成功,{result}')
+        else:
+            logger.error(f'STGUSDC转换HONEY失败')
 
         logger.debug('HONEY转换STGUSDC开始')
-        # 授权honey
-        approve_result = bera.approve_token(honey_swap_address, int("0x" + "f" * 64, 16), honey_address)
-        # logger.debug(approve_result)
-        # 赎回
+
         honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
-        result = bera.honey_redeem(int(honey_balance * 0.5))
-        # logger.debug(result)
-        logger.success(f'HONEY转换STGUSDC成功,赎回成功！！！,{result}')
+        random_amount = round(random.uniform(0.01, 0.20), 2)
+        amount = int(honey_balance * random_amount)
+        approve_result = bera.approve_token(honey_swap_address, amount, honey_address)
+        if approve_result:
+            result = bera.honey_redeem(int(honey_balance * random_amount))
+            logger.success(f'HONEY转换STGUSDC成功,{result}')
+        else:
+            logger.error(f'HONEY转换STGUSDC失败')
+
         logger.debug('-------------------------------------------------------------------------------------')
         return True
     except Exception as e:
         logger.error(e)
-        time.sleep(5)
         return False

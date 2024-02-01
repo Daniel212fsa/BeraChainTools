@@ -158,7 +158,7 @@ class BeraChainTools(object):
         return response
 
     def approve_token(self, spender: Union[Address, ChecksumAddress], amount: int,
-                      approve_token_address: Union[Address, ChecksumAddress]) -> str:
+                      approve_token_address: Union[Address, ChecksumAddress]) -> bool:
         """
         授权代币
         :param spender: 授权给哪个地址
@@ -167,16 +167,23 @@ class BeraChainTools(object):
         :return: hash
         """
         approve_contract = self.w3.eth.contract(address=approve_token_address, abi=erc_20_abi)
-        txn = approve_contract.functions.approve(spender, amount).build_transaction(
+        allowance_balance = approve_contract.functions.allowance(self.account.address, spender).call()
+        if allowance_balance > amount:
+            logger.debug(f'已授权,无须重复授权！')
+            return True
+        # 无限授权
+        txn = approve_contract.functions.approve(spender, int("0x" + "f" * 64, 16)).build_transaction(
             {'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
              'nonce': self.get_nonce()})
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        # 等待交易收据
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
-        logger.debug(f'授权成功！！！，{transaction_receipt.status}')
-        return order_hash.hex()
+        if transaction_receipt.status == 1:
+            logger.debug(f'授权成功,{transaction_receipt.status}')
+            return True
+        else:
+            logger.debug(f'授权失败,{transaction_receipt.status}')
+            return False
 
     def bex_swap(self, amount_in: int, asset_in_address: Union[Address, ChecksumAddress],
                  asset_out_address: Union[Address, ChecksumAddress]) -> bool:
@@ -196,38 +203,67 @@ class BeraChainTools(object):
             balance = asset_in_token_contract.functions.balanceOf(self.account.address).call()
             assert balance != 0
             assert balance >= amount_in
-            allowance_balance = asset_in_token_contract.functions.allowance(self.account.address,
-                                                                            bex_swap_address).call()
-            if allowance_balance < amount_in:
-                raise ValueError(
-                    f'需要授权\nplease run : \nbera.approve_token(bex_swap_address, int("0x" + "f" * 64, 16), "{asset_in_address}")')
-
-        headers = {'authority': 'artio-80085-dex-router.berachain.com', 'accept': '*/*',
-                   'accept-language': 'zh-CN,zh;q=0.9', 'cache-control': 'no-cache',
-                   'origin': 'https://artio.bex.berachain.com', 'pragma': 'no-cache',
-                   'referer': 'https://artio.bex.berachain.com/', 'user-agent': self.fake.chrome()}
-
-        params = {'quoteAsset': asset_out_address, 'baseAsset': asset_in_address, 'amount': amount_in,
-                  'swap_type': 'given_in'}
-
-        response = self.session.get('https://artio-80085-dex-router.berachain.com/dex/route', params=params,
-                                    headers=headers)
-        #print(params)
-        #print(response.text)
-        assert response.status_code == 200
-        swaps_list = response.json()['steps']
+        #     allowance_balance = asset_in_token_contract.functions.allowance(self.account.address,
+        #                                                                     bex_swap_address).call()
+        #     if allowance_balance < amount_in:
+        #         raise ValueError(
+        #             f'需要授权\nplease run : \nbera.approve_token(bex_swap_address, int("0x" + "f" * 64, 16), "{asset_in_address}")')
+        #
+        # headers = {'authority': 'artio-80085-dex-router.berachain.com', 'accept': '*/*',
+        #            'accept-language': 'zh-CN,zh;q=0.9', 'cache-control': 'no-cache',
+        #            'origin': 'https://artio.bex.berachain.com', 'pragma': 'no-cache',
+        #            'referer': 'https://artio.bex.berachain.com/', 'user-agent': self.fake.chrome()}
+        #
+        # params = {'quoteAsset': asset_out_address, 'baseAsset': asset_in_address, 'amount': amount_in,
+        #           'swap_type': 'given_in'}
+        #
+        # response = self.session.get('https://artio-80085-dex-router.berachain.com/dex/route', params=params,
+        #                             headers=headers)
+        # # print(params)
+        # print(response.text)
+        # assert response.status_code == 200
+        # swaps_list = response.json()['steps']
         swaps = list()
-        for index, info in enumerate(swaps_list):
+        # for index, info in enumerate(swaps_list):
+        #     swaps.append(dict(
+        #         poolId=self.w3.to_checksum_address(info['pool']),
+        #         assetIn=self.w3.to_checksum_address(info['assetIn']),
+        #         amountIn=int(info['amountIn']),
+        #         assetOut=self.w3.to_checksum_address(info['assetOut']),
+        #         # amountOut=0 if index + 1 != len(swaps_list) else int(int(info['amountOut']) * 0.4),
+        #         amountOut=0,
+        #         userData=b''))
+        # if asset_in_address.lower() == wbear_address.lower():
+        #     swaps[0]['assetIn'] = zero_address
+        if asset_in_address == wbear_address and asset_out_address == usdc_address:
             swaps.append(dict(
-                poolId=self.w3.to_checksum_address(info['pool']),
-                assetIn=self.w3.to_checksum_address(info['assetIn']),
-                amountIn=int(info['amountIn']),
-                assetOut=self.w3.to_checksum_address(info['assetOut']),
-                # amountOut=0 if index + 1 != len(swaps_list) else int(int(info['amountOut']) * 0.4),
+                poolId='0x7D5b5C1937ff1b18B45AbC64aeAB68663a7a58Ab',
+                assetIn='0x0000000000000000000000000000000000000000',
+                amountIn=amount_in,
+                assetOut=usdc_address,
                 amountOut=0,
                 userData=b''))
-        if asset_in_address.lower() == wbear_address.lower():
-            swaps[0]['assetIn'] = zero_address
+        elif asset_in_address == wbear_address and asset_out_address == weth_address:
+            swaps.append(dict(
+                poolId='0xD3C962F3F36484439A41d0E970cF6581dDf0a9A1',
+                assetIn='0x0000000000000000000000000000000000000000',
+                amountIn=amount_in,
+                assetOut=weth_address,
+                amountOut=0,
+                userData=b''))
+        elif asset_in_address == usdc_address and asset_out_address == honey_address:
+            swaps.append(dict(
+                poolId='0x5479FbDef04302D2DEEF0Cc78f7D503d81fDFCC9',
+                assetIn=usdc_address,
+                amountIn=amount_in,
+                assetOut=honey_address,
+                amountOut=0,
+                userData=b''))
+        else:
+            logger.debug(f'交换失败,不支持的交易')
+            return False
+
+        #print(swaps)
 
         txn = self.bex_contract.functions.batchSwap(kind=0, swaps=swaps, deadline=99999999).build_transaction(
             {'gas': 500000 + random.randint(1, 10000), 'value': amount_in if asset_in_address == wbear_address else 0,
@@ -237,10 +273,10 @@ class BeraChainTools(object):
         # 等待交易收据
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
         if transaction_receipt.status == 1:
-            logger.debug(f'交换成功！！！{transaction_receipt.status}')
+            logger.debug(f'交换成功,{transaction_receipt.status}')
             return True
         else:
-            logger.debug(f'交换失败！！！{transaction_receipt.status}')
+            logger.debug(f'交换失败,{transaction_receipt.status}')
             return False
 
     def bex_add_liquidity(self, amount_in: int, pool_address: Union[Address], asset_in_address: Union[Address]) -> bool:
@@ -255,11 +291,6 @@ class BeraChainTools(object):
         token_balance = asset_in_token_contract.functions.balanceOf(self.account.address).call()
         assert token_balance != 0
         assert token_balance >= amount_in
-        allowance_balance = asset_in_token_contract.functions.allowance(self.account.address,
-                                                                        bex_approve_liquidity_address).call()
-        if allowance_balance < amount_in:
-            raise ValueError(
-                f'需要授权\nplease run : \nbera.approve_token(bex_approve_liquidity_address, int("0x" + "f" * 64, 16), "{asset_in_address}")')
         txn = self.bex_contract.functions.addLiquidity(pool=pool_address, receiver=self.account.address,
                                                        assetsIn=[asset_in_address],
                                                        amountsIn=[amount_in]).build_transaction(
@@ -267,13 +298,12 @@ class BeraChainTools(object):
              'nonce': self.get_nonce()})
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        # 等待交易收据
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
         if transaction_receipt.status == 1:
-            logger.debug(f'bex 增加流动性成功！！！{transaction_receipt.status}')
+            logger.debug(f'bex 增加流动性成功,{transaction_receipt.status}')
             return True
         else:
-            logger.debug(f'bex 增加流动性失败！！！{transaction_receipt.status}')
+            logger.debug(f'bex 增加流动性失败,{transaction_receipt.status}')
             return False
 
     def honey_mint(self, amount_usdc_in: int) -> str:
@@ -285,20 +315,14 @@ class BeraChainTools(object):
         usdc_balance = self.usdc_contract.functions.balanceOf(self.account.address).call()
         assert usdc_balance != 0
         assert usdc_balance >= amount_usdc_in
-        allowance_balance = self.usdc_contract.functions.allowance(self.account.address, honey_swap_address).call()
-        if allowance_balance < amount_usdc_in:
-            raise ValueError(
-                f'需要授权\nplease run : \nbera.approve_token(honey_swap_address, int("0x" + "f" * 64, 16), "{usdc_address}")')
         txn = self.honey_swap_contract.functions.mint(to=self.account.address, collateral=usdc_address,
                                                       amount=amount_usdc_in, ).build_transaction(
             {'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
              'nonce': self.get_nonce()})
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        # 等待交易收据
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
-        logger.debug(f'STGUSDC转换HONEY成功！！！{transaction_receipt.status}')
+        logger.debug(f'STGUSDC转换HONEY成功,{transaction_receipt.status}')
         return order_hash.hex()
 
     def honey_redeem(self, amount_honey_in: int) -> str:
@@ -310,21 +334,14 @@ class BeraChainTools(object):
         honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
         assert honey_balance != 0
         assert honey_balance >= amount_honey_in
-        allowance_balance = self.honey_contract.functions.allowance(self.account.address, honey_swap_address).call()
-        if allowance_balance < amount_honey_in:
-            raise ValueError(
-                f'需要授权\nplease run : \nbera.approve_token(honey_swap_address, int("0x" + "f" * 64, 16), "{honey_address}")')
-
         txn = self.honey_swap_contract.functions.redeem(to=self.account.address, amount=amount_honey_in,
                                                         collateral=usdc_address).build_transaction(
             {'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
              'nonce': self.get_nonce()})
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        # 等待交易收据
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
-        logger.debug(f'HONEY转换STGUSDC成功！！！{transaction_receipt.status}')
+        logger.debug(f'HONEY转换STGUSDC成功,{transaction_receipt.status}')
         return order_hash.hex()
 
     def bend_deposit(self, amount_in: int, amount_in_token_address: Union[Address]) -> str:
@@ -338,21 +355,14 @@ class BeraChainTools(object):
         token_balance = amount_in_token_contract.functions.balanceOf(self.account.address).call()
         assert token_balance != 0
         assert token_balance >= amount_in
-        allowance_balance = amount_in_token_contract.functions.allowance(self.account.address,
-                                                                         bend_address).call()
-        if allowance_balance < amount_in:
-            raise ValueError(
-                f'需要授权\nplease run : \nbera.approve_token(bend_address, int("0x" + "f" * 64, 16), "{amount_in_token_address}")')
         txn = self.bend_contract.functions.supply(asset=amount_in_token_address, amount=amount_in,
                                                   onBehalfOf=self.account.address, referralCode=0).build_transaction(
             {'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
              'nonce': self.get_nonce()})
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        # 等待交易收据
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
-        logger.debug(f'存钱成功！！！！{transaction_receipt.status}')
+        logger.debug(f'存钱成功,{transaction_receipt.status}')
         return order_hash.hex()
 
     def bend_borrow(self, amount_out: int, asset_token_address: Union[Address]) -> str:
@@ -369,11 +379,8 @@ class BeraChainTools(object):
              'nonce': self.get_nonce()})
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        # 等待交易收据
-        # self.w3.eth.wait_for_transaction_receipt(order_hash)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
-        logger.debug(f'借款成功！！！！{transaction_receipt.status}')
+        logger.debug(f'借款成功,{transaction_receipt.status}')
         return order_hash.hex()
 
     def bend_repay(self, repay_amount: int, asset_token_address: Union[Address]) -> str:
@@ -383,11 +390,6 @@ class BeraChainTools(object):
         :param asset_token_address: repay 代币地址
         :return:
         """
-        allowance_balance = self.honey_contract.functions.allowance(self.account.address, bend_address).call()
-        if allowance_balance < repay_amount:
-            raise ValueError(
-                f'需要授权\nplease run : \nbera.approve_token(bend_address, int("0x" + "f" * 64, 16), "{honey_address}")')
-
         txn = self.bend_contract.functions.repay(asset=asset_token_address, amount=repay_amount,
                                                  interestRateMode=2, onBehalfOf=self.account.address).build_transaction(
             {'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
@@ -395,20 +397,14 @@ class BeraChainTools(object):
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
-        logger.debug(f'还款成功！！！！{transaction_receipt.status}')
+        logger.debug(f'还款成功,{transaction_receipt.status}')
         return order_hash.hex()
 
     def honey_jar_mint(self):
         honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
-        print("honey_balance", honey_balance)
-        allowance_balance = self.honey_contract.functions.allowance(self.account.address, ooga_booga_address).call()
-        if allowance_balance / 1e18 < 4.2:
-            raise ValueError(
-                f'需要授权\nplease run : \nbera.approve_token(ooga_booga_address, int("0x" + "f" * 64, 16), "{honey_address}")')
         has_mint = self.ooga_booga_contract.functions.hasMinted(self.account.address).call()
         if has_mint:
-            logger.debug(f'已mint！！！！')
+            logger.debug(f'已mint！')
             return True
         signed_txn = self.w3.eth.account.sign_transaction(
             dict(
@@ -422,14 +418,12 @@ class BeraChainTools(object):
             self.account.key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
         if transaction_receipt.status == 1:
-            logger.debug(f'mint成功！！！！{transaction_receipt.status}')
+            logger.debug(f'mint成功,{transaction_receipt.status}')
             return True
         else:
-            logger.debug(f'mint失败！！！！{transaction_receipt.status}')
+            logger.debug(f'mint失败,{transaction_receipt.status}')
             return False
-        # return order_hash.hex()
 
     def deploy_contract(self, contract_source_code, solc_version):
         """
@@ -451,10 +445,8 @@ class BeraChainTools(object):
             gasPrice=int(self.w3.eth.gas_price * 1.15),
             nonce=self.get_nonce(),
             data=contract_interface['bin'])
-        # 签署交易
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # 打印收据信息
-        logger.debug(f'部署成功！！！！{transaction_receipt.status}')
+        logger.debug(f'部署成功,{transaction_receipt.status}')
         return order_hash.hex()
