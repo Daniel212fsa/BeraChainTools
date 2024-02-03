@@ -22,18 +22,18 @@ def interacte(arg):
         index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address},私钥:{private_key}")
-        logger.debug(f"无需重复交互")
+        logger.debug(f"第{index}次交互,地址:{account_address}")
+        logger.debug(f"第{index}次交互,无需重复交互")
         bera = BeraChainTools(private_key=private_key, client_key=client_key, solver_provider=solver_provider,
                               rpc_url=rpc_url)
         has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
         if has_mint:
-            logger.debug(f"无需重复交互")
+            logger.debug(f"第{index}次交互,无需重复交互")
             return
 
         for i in range(10):
             balance = bera.get_balance()
-            logger.debug(f"测试币余额 {balance / 10 ** 18}")
+            logger.debug(f"第{index}次交互,测试币余额 {balance / 10 ** 18}")
             if balance < 4 * 10 ** 17:
                 try:
                     result = bera.claim_bera(proxies=get_proxy(proxy_url))
@@ -47,7 +47,7 @@ def interacte(arg):
                 break
         balance = bera.get_balance()
         if balance > 0:
-            bex_interacte(private_key, rpc_url)
+            bex_interacte(private_key, rpc_url, index)
             steps = [
                 honey_interacte,
                 # bend_interacte,
@@ -56,9 +56,9 @@ def interacte(arg):
             ]
             random.shuffle(steps)
             for step in steps:
-                step(private_key, rpc_url)
+                step(private_key, rpc_url, index)
     except Exception as e:
-        logger.error(e)
+        logger.error(f'第{index}次交互,{e}')
 
 
 if __name__ == '__main__':
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         args2 = []
         index = 0
         for item in args:
-            args2.append([index, item[0], item[1],item[2],item[3],item[4]])
+            args2.append([index, item[0], item[1], item[2], item[3], item[4]])
             index += 1
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             # 将任务提交给线程池

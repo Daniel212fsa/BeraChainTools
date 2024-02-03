@@ -7,13 +7,13 @@ from bera_tools import BeraChainTools
 from config.address_config import bend_address, weth_address, honey_address, bend_pool_address
 
 
-def bend_interacte(private_key, rpc_url):
+def bend_interacte(private_key, rpc_url,index):
     for _ in range(10):
         if bend_interacte_(private_key, rpc_url):
             return
 
 
-def bend_interacte_(private_key, rpc_url):
+def bend_interacte_(private_key, rpc_url,index):
     try:
         account = Account.from_key(private_key)
         bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)

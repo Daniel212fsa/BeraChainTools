@@ -9,13 +9,13 @@ from solcx import install_solc
 from bera_tools import BeraChainTools
 
 
-def deploy_contract(private_key, rpc_url):
+def deploy_contract(private_key, rpc_url, index):
     for _ in range(10):
-        if deploy_contract_(private_key, rpc_url):
+        if deploy_contract_(private_key, rpc_url, index):
             return
 
 
-def deploy_contract_(private_key, rpc_url):
+def deploy_contract_(private_key, rpc_url, index):
     try:
         account = Account.from_key(private_key)
         account_address = account.address
@@ -29,11 +29,13 @@ def deploy_contract_(private_key, rpc_url):
         code = code.replace('Bera Test Ether', 'Bera Test Ether' + random_string)
         # 部署合约
         result = bera.deploy_contract(code, '0.4.18')
-        # logger.debug(result)
-        logger.success(f'{account_address},部署合约成功,{result}')
-        logger.debug('-------------------------------------------------------------------------------------')
-        return True
+        if result:
+            logger.success(f'第{index}次交互:{account_address},部署合约成功,{result}')
+            logger.debug('-------------------------------------------------------------------------------------')
+            return True
+        else:
+            logger.error(f'第{index}次交互:{account_address},部署合约失败,{result}')
+            return False
     except Exception as e:
-        logger.error(f'{account_address},部署合约失败，{e}')
-        time.sleep(5)
-    return False
+        logger.error(f'第{index}次交互:{account_address},部署合约失败，{e}')
+        return False
