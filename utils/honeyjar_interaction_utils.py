@@ -10,13 +10,13 @@ from config.address_config import ooga_booga_address, honey_address, wbear_addre
 # from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
 #     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
 #     ooga_booga_address
-def honeyjar_interacte(private_key, rpc_url,index):
+def honeyjar_interacte(private_key, rpc_url, index):
     for _ in range(10):
-        if honeyjar_interacte_(private_key, rpc_url):
+        if honeyjar_interacte_(private_key, rpc_url, index):
             return
 
 
-def honeyjar_interacte_(private_key, rpc_url,index):
+def honeyjar_interacte_(private_key, rpc_url, index):
     account = Account.from_key(private_key)
     account_address = account.address
     try:
