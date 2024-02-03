@@ -30,7 +30,7 @@ def generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file
             bera = BeraChainTools(private_key=account.key, client_key=client_key, solver_provider=solver_provider,
                                   rpc_url=rpc_url)
             result = bera.claim_bera(proxies=get_proxy(proxy_url))
-            if 'Txhash' in result.text:
+            if 'Txhash' in result.text or 'to the queue' in result.text:
                 logger.success(f'领水成功,{result.text}\n')
                 with open(file_path, 'a') as f:
                     f.write(account.key.hex() + '\n')

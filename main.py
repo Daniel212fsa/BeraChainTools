@@ -80,7 +80,7 @@ if __name__ == '__main__':
         # 预期领水的地址数
         count = 1000
         # 线程数
-        max_workers = 5
+        max_workers = 3
         generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file_path, max_workers)
     else:
         interaction_count = 0  # 初始化交互计数器
