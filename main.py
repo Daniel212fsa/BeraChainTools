@@ -63,7 +63,7 @@ def interacte(arg):
 
 if __name__ == '__main__':
     # 是否为初始化钱包模式
-    mode_init_wallet = False
+    mode_init_wallet = True
     config = configparser.ConfigParser()
     config.read('config.ini')
     file_path = config.get('app', 'file_path')
@@ -77,7 +77,11 @@ if __name__ == '__main__':
         with open(file_path, 'w') as file:
             file.write('')
     if mode_init_wallet:
-        generate_wallet(1000, rpc_url, proxy_url, solver_provider, client_key, file_path)
+        # 预期领水的地址数
+        count = 1000
+        # 线程数
+        max_workers = 5
+        generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file_path, max_workers)
     else:
         interaction_count = 0  # 初始化交互计数器
         args = []

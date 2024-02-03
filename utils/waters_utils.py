@@ -4,6 +4,7 @@ import requests
 from bera_tools import BeraChainTools
 import configparser
 import os
+import concurrent.futures
 
 
 # from proxy_utils import get_proxy
@@ -19,19 +20,39 @@ def get_proxy(proxy_url):
     return proxy
 
 
-def generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file_path):
-    for i in range(count):
+def generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file_path, max_workers):
+    def generate_account(i):
         try:
-            logger.debug(f'生成第{i + 1}个账号')
+            logger.debug(f'Generating account {i + 1}')
             account = Account.create()
-            # print(vars(account))
-            logger.debug(f'address:{account.address}')
-            logger.debug(f'key:{account.key.hex()}')
+            logger.debug(f'Address: {account.address}')
+            logger.debug(f'Key: {account.key.hex()}')
             bera = BeraChainTools(private_key=account.key, client_key=client_key, solver_provider=solver_provider,
                                   rpc_url=rpc_url)
             result = bera.claim_bera(proxies=get_proxy(proxy_url))
-            logger.debug(f'{result.text}\n')
-            with open(file_path, 'a') as f:
-                f.write(account.key.hex() + '\n')
+            if 'Txhash' in result.text:
+                logger.success(f'领水成功,{result.text}\n')
+                with open(file_path, 'a') as f:
+                    f.write(account.key.hex() + '\n')
+            else:
+                logger.error(f'领水失败,{result.text}\n')
         except Exception as e:
             logger.error(e)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        executor.map(generate_account, range(count))
+    # for i in range(count):
+    #     try:
+    #         logger.debug(f'生成第{i + 1}个账号')
+    #         account = Account.create()
+    #         # print(vars(account))
+    #         logger.debug(f'address:{account.address}')
+    #         logger.debug(f'key:{account.key.hex()}')
+    #         bera = BeraChainTools(private_key=account.key, client_key=client_key, solver_provider=solver_provider,
+    #                               rpc_url=rpc_url)
+    #         result = bera.claim_bera(proxies=get_proxy(proxy_url))
+    #         logger.debug(f'{result.text}\n')
+    #         with open(file_path, 'a') as f:
+    #             f.write(account.key.hex() + '\n')
+    #     except Exception as e:
+    #         logger.error(e)
