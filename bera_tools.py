@@ -179,10 +179,10 @@ class BeraChainTools(object):
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
         if transaction_receipt.status == 1:
-            logger.debug(f'授权成功,{transaction_receipt.status}')
+            #logger.debug(f'授权成功,{transaction_receipt.status}')
             return True
         else:
-            logger.debug(f'授权失败,{transaction_receipt.status}')
+            #logger.debug(f'授权失败,{transaction_receipt.status}')
             return False
 
     def bex_swap(self, amount_in: int, asset_in_address: Union[Address, ChecksumAddress],
@@ -273,10 +273,10 @@ class BeraChainTools(object):
         # 等待交易收据
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
         if transaction_receipt.status == 1:
-            logger.debug(f'交换成功,{transaction_receipt.status}')
+            #logger.debug(f'交换成功,{transaction_receipt.status}')
             return True
         else:
-            logger.debug(f'交换失败,{transaction_receipt.status}')
+            #logger.debug(f'交换失败,{transaction_receipt.status}')
             return False
 
     def bex_add_liquidity(self, amount_in: int, pool_address: Union[Address], asset_in_address: Union[Address]) -> bool:
@@ -300,13 +300,13 @@ class BeraChainTools(object):
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
         if transaction_receipt.status == 1:
-            logger.debug(f'bex 增加流动性成功,{transaction_receipt.status}')
+            #logger.debug(f'bex 增加流动性成功,{transaction_receipt.status}')
             return True
         else:
-            logger.debug(f'bex 增加流动性失败,{transaction_receipt.status}')
+            #logger.debug(f'bex 增加流动性失败,{transaction_receipt.status}')
             return False
 
-    def honey_mint(self, amount_usdc_in: int) -> str:
+    def honey_mint(self, amount_usdc_in: int) -> bool:
         """
         honey mint
         :param amount_usdc_in: 输入数量
@@ -322,10 +322,14 @@ class BeraChainTools(object):
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        logger.debug(f'STGUSDC转换HONEY成功,{transaction_receipt.status}')
-        return order_hash.hex()
+        if transaction_receipt.status == 1:
+            return True
+        else:
+            return False
+        #logger.debug(f'STGUSDC转换HONEY成功,{transaction_receipt.status}')
+        # return order_hash.hex()
 
-    def honey_redeem(self, amount_honey_in: int) -> str:
+    def honey_redeem(self, amount_honey_in: int) -> bool:
         """
         honey redeem
         :param amount_honey_in: 输入数量
@@ -341,8 +345,12 @@ class BeraChainTools(object):
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        logger.debug(f'HONEY转换STGUSDC成功,{transaction_receipt.status}')
-        return order_hash.hex()
+        if transaction_receipt.status == 1:
+            return True
+        else:
+            return False
+        # logger.debug(f'HONEY转换STGUSDC成功,{transaction_receipt.status}')
+        # return order_hash.hex()
 
     def bend_deposit(self, amount_in: int, amount_in_token_address: Union[Address]) -> str:
         """

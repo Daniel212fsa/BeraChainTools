@@ -18,43 +18,47 @@ from functools import partial
 
 
 def interacte(arg):
-    private_key, rpc_url, proxy_url, solver_provider, client_key = arg
-    account = Account.from_key(private_key)
-    # step1: 领水
-    bera = BeraChainTools(private_key=private_key, client_key=client_key, solver_provider=solver_provider,
-                          rpc_url=rpc_url)
-    has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
-    if has_mint:
-        print("无需重复交互")
-        return
+    try:
+        index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address},私钥:{private_key}")
+        logger.debug(f"无需重复交互")
+        bera = BeraChainTools(private_key=private_key, client_key=client_key, solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
+        if has_mint:
+            logger.debug(f"无需重复交互")
+            return
 
-    for i in range(3):
-        balance = bera.get_balance()
-        print("测试币余额", balance)
-        if balance == 0:
-            try:
-                result = bera.claim_bera(proxies=get_proxy(proxy_url))
-                logger.debug(f'{result.text}\n')
-                time.sleep(4)
+        for i in range(10):
+            balance = bera.get_balance()
+            logger.debug(f"测试币余额 {balance / 10 ** 18}")
+            if balance < 4 * 10 ** 17:
+                try:
+                    result = bera.claim_bera(proxies=get_proxy(proxy_url))
+                    logger.debug(f'{result.text}\n')
+                    time.sleep(4)
+                    break
+                except Exception as e:
+                    print(e)
+                    time.sleep(4)
+            else:
                 break
-            except Exception as e:
-                print(e)
-                time.sleep(4)
-        else:
-            break
-
-    balance = bera.get_balance()
-    if balance > 0:
-        bex_interacte(private_key, rpc_url)
-        steps = [
-            honey_interacte,
-            # bend_interacte,
-            honeyjar_interacte,
-            deploy_contract
-        ]
-        random.shuffle(steps)
-        for step in steps:
-            step(private_key, rpc_url)
+        balance = bera.get_balance()
+        if balance > 0:
+            bex_interacte(private_key, rpc_url)
+            steps = [
+                honey_interacte,
+                # bend_interacte,
+                honeyjar_interacte,
+                deploy_contract
+            ]
+            random.shuffle(steps)
+            for step in steps:
+                step(private_key, rpc_url)
+    except Exception as e:
+        logger.error(e)
 
 
 if __name__ == '__main__':
@@ -73,7 +77,7 @@ if __name__ == '__main__':
         with open(file_path, 'w') as file:
             file.write('')
     if mode_init_wallet:
-        generate_wallet(1, rpc_url, proxy_url, solver_provider, client_key, file_path)
+        generate_wallet(1000, rpc_url, proxy_url, solver_provider, client_key, file_path)
     else:
         interaction_count = 0  # 初始化交互计数器
         args = []
@@ -81,9 +85,14 @@ if __name__ == '__main__':
             for private_key in file:
                 args.append([private_key.strip(), rpc_url, proxy_url, solver_provider, client_key])
         random.shuffle(args)
+        args2 = []
+        index = 0
+        for item in args:
+            args2.append([index, item[0], item[1],item[2],item[3],item[4]])
+            index += 1
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             # 将任务提交给线程池
-            results = list(executor.map(interacte, args))
+            results = list(executor.map(interacte, args2))
         # for i in private_keys:
         #     interaction_count += 1
         #     account = Account.from_key(i)

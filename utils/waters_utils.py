@@ -2,6 +2,8 @@ from eth_account import Account
 from loguru import logger
 import requests
 from bera_tools import BeraChainTools
+import configparser
+import os
 
 
 # from proxy_utils import get_proxy
@@ -22,6 +24,7 @@ def generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file
         try:
             logger.debug(f'生成第{i + 1}个账号')
             account = Account.create()
+            # print(vars(account))
             logger.debug(f'address:{account.address}')
             logger.debug(f'key:{account.key.hex()}')
             bera = BeraChainTools(private_key=account.key, client_key=client_key, solver_provider=solver_provider,

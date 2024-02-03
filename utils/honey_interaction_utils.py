@@ -26,7 +26,10 @@ def honey_interacte_(private_key, rpc_url):
         approve_result = bera.approve_token(honey_swap_address, amount, usdc_address)
         if approve_result:
             result = bera.honey_mint(amount)
-            logger.success(f'{account_address},STGUSDC转换HONEY成功,{result}')
+            if result:
+                logger.success(f'{account_address},STGUSDC转换HONEY成功,{result}')
+            else:
+                logger.error(f'{account_address},STGUSDC转换HONEY失败')
         else:
             logger.error(f'{account_address},STGUSDC转换HONEY失败')
 
@@ -38,7 +41,10 @@ def honey_interacte_(private_key, rpc_url):
         approve_result = bera.approve_token(honey_swap_address, amount, honey_address)
         if approve_result:
             result = bera.honey_redeem(int(honey_balance * random_amount))
-            logger.success(f'{account_address},HONEY转换STGUSDC成功,{result}')
+            if result:
+                logger.success(f'{account_address},HONEY转换STGUSDC成功,{result}')
+            else:
+                logger.error(f'{account_address},HONEY转换STGUSDC失败')
         else:
             logger.error(f'{account_address},HONEY转换STGUSDC失败')
 

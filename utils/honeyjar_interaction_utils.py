@@ -22,14 +22,24 @@ def honeyjar_interacte_(private_key, rpc_url):
     try:
         logger.debug(f'{account_address},0xhoneyjar 交互开始')
         bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)
+        bera_balance = bera.w3.eth.get_balance(account.address)
         has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
         if has_mint:
             logger.success(f'{account_address},之前mint过了,0xhoneyjar 交互成功')
             logger.debug('-------------------------------------------------------------------------------------')
             return True
+        # 如果usdc余额不足,先兑换udsc
+        usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
+        if usdc_balance < 42 * 10 ** 17:
+            for i in range(10):
+                random_amount = round(random.uniform(0.10, 0.20), 2)
+                result = bera.bex_swap(int(bera_balance * random_amount), wbear_address, usdc_address)
+                if result:
+                    break
 
         honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
-        logger.debug(f'{account_address},honey_balance:{honey_balance / 10 ** 18}')
+        logger.debug(
+            f'{account_address},usdc_balance:{usdc_balance / 10 ** 18},honey_balance:{honey_balance / 10 ** 18}')
         approve_result = bera.approve_token(ooga_booga_address, 5 * 10 ** 18, honey_address)
         if approve_result:
             if honey_balance < 42 * 10 ** 17:
