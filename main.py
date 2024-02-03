@@ -37,7 +37,7 @@ def interacte(arg):
             if balance < 4 * 10 ** 17:
                 try:
                     result = bera.claim_bera(proxies=get_proxy(proxy_url))
-                    logger.debug(f'{result.text}\n')
+                    logger.debug(f'第{index}次交互,{result.text}\n')
                     time.sleep(4)
                     break
                 except Exception as e:
