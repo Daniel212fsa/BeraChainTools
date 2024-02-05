@@ -33,8 +33,12 @@ def get_proxy(proxy_url):
 
 
 class BeraChainTools(object):
-    def __init__(self, private_key, proxy_url, client_key='', solver_provider='',
-                 rpc_url='https://artio.rpc.berachain.com/'):
+    def __init__(self, private_key,
+                 proxy_url='',
+                 client_key='',
+                 solver_provider='',
+                 rpc_url='https://artio.rpc.berachain.com/'
+                 ):
         if solver_provider not in ["yescaptcha", "2captcha", "ez-captcha", ""]:
             raise ValueError("solver_provider must be 'yescaptcha' or '2captcha' or 'ez-captcha' ")
         self.solver_provider = solver_provider

@@ -23,7 +23,9 @@ def interacte(arg):
         account = Account.from_key(private_key)
         account_address = account.address
         logger.debug(f"第{index}次交互,地址:{account_address}")
-        bera = BeraChainTools(private_key=private_key, proxy_url=proxy_url, client_key=client_key,
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
         has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
@@ -55,7 +57,7 @@ def interacte(arg):
                 honey_interacte,
                 # bend_interacte,
                 honeyjar_interacte,
-                deploy_contract
+                # deploy_contract
             ]
             random.shuffle(steps)
             for step in steps:
@@ -68,9 +70,9 @@ if __name__ == '__main__':
     # 是否为初始化钱包模式
     mode_init_wallet = False
     # 只领水
-    only_claim = True
+    only_claim = False
     # 只交互
-    on_action = False
+    on_action = True
     config = configparser.ConfigParser()
     config.read('config.ini')
     file_path = config.get('app', 'file_path')
