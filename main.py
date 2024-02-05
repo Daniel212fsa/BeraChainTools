@@ -23,7 +23,8 @@ def interacte(arg):
         account = Account.from_key(private_key)
         account_address = account.address
         logger.debug(f"第{index}次交互,地址:{account_address}")
-        bera = BeraChainTools(private_key=private_key, client_key=client_key, solver_provider=solver_provider,
+        bera = BeraChainTools(private_key=private_key, proxy_url=proxy_url, client_key=client_key,
+                              solver_provider=solver_provider,
                               rpc_url=rpc_url)
         has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
         if has_mint:
@@ -36,12 +37,13 @@ def interacte(arg):
                 if balance < 4 * 10 ** 16:
                     try:
                         result = bera.claim_bera(proxies=get_proxy(proxy_url))
-                        logger.debug(f'第{index}次交互,{result.text}\n')
-                        time.sleep(4)
-                        break
+                        if 'Txhash' in result.text or 'to the queue' in result.text:
+                            logger.success(f'第{index}次交互,领水成功,{result.text}\n')
+                            break
+                        else:
+                            logger.error(f'第{index}次交互,领水失败,{result.text}\n')
                     except Exception as e:
-                        print(e)
-                        time.sleep(4)
+                        logger.error(f'第{index}次交互,领水失败,{e}\n')
                 else:
                     break
         if only_claim:

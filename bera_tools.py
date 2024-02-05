@@ -6,7 +6,6 @@ import json
 import random
 import time
 from typing import Union
-
 import requests
 from eth_account import Account
 from eth_typing import Address, ChecksumAddress
@@ -22,14 +21,27 @@ from config.address_config import bex_swap_address, usdc_address, honey_address,
     ooga_booga_address
 
 
+def get_proxy(proxy_url):
+    aaa = requests.get(proxy_url).text
+    proxy_host = aaa.splitlines()[0]
+    logger.debug('代理IP为：' + proxy_host)
+    proxy = {
+        'http': 'http://' + proxy_host,
+        'https': 'http://' + proxy_host
+    }
+    return proxy
+
+
 class BeraChainTools(object):
-    def __init__(self, private_key, client_key='', solver_provider='', rpc_url='https://artio.rpc.berachain.com/'):
+    def __init__(self, private_key, proxy_url, client_key='', solver_provider='',
+                 rpc_url='https://artio.rpc.berachain.com/'):
         if solver_provider not in ["yescaptcha", "2captcha", "ez-captcha", ""]:
             raise ValueError("solver_provider must be 'yescaptcha' or '2captcha' or 'ez-captcha' ")
         self.solver_provider = solver_provider
         self.private_key = private_key
         self.client_key = client_key
         self.rpc_url = rpc_url
+        self.proxy_url = proxy_url
         self.fake = Faker()
         self.account = Account.from_key(self.private_key)
         self.session = requests.session()
@@ -149,14 +161,19 @@ class BeraChainTools(object):
             'user-agent': user_agent
         }
         params = {'address': self.account.address}
-        response = requests.post(url,
-                                 params=params,
-                                 headers=headers,
-                                 data=json.dumps(params),
-                                 proxies=proxies,
-                                 timeout=30
-                                 )
-        return response
+        for i in range(10):
+            try:
+                response = requests.post(url,
+                                         params=params,
+                                         headers=headers,
+                                         data=json.dumps(params),
+                                         proxies=proxies,
+                                         timeout=30
+                                         )
+                logger.debug(f'第{i}次使用代理{proxies["http"]},返回结果,{response.text}')
+                return response
+            except Exception as e:
+                proxies = get_proxy(self.proxy_url)
 
     def approve_token(self, spender: Union[Address, ChecksumAddress], amount: int,
                       approve_token_address: Union[Address, ChecksumAddress]) -> bool:

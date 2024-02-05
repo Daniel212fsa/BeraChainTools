@@ -31,7 +31,8 @@ def generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file
             account = Account.create()
             logger.debug(f'Address: {account.address}')
             logger.debug(f'Key: {account.key.hex()}')
-            bera = BeraChainTools(private_key=account.key, client_key=client_key, solver_provider=solver_provider,
+            bera = BeraChainTools(private_key=account.key, proxy_url=proxy_url, client_key=client_key,
+                                  solver_provider=solver_provider,
                                   rpc_url=rpc_url)
 
             proxies_to = {}
