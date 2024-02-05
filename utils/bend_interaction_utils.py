@@ -2,7 +2,7 @@ import time
 
 from eth_account import Account
 from loguru import logger
-
+import random
 from bera_tools import BeraChainTools
 from config.address_config import bend_address, weth_address, honey_address, bend_pool_address
 
@@ -32,7 +32,7 @@ def bend_interacte_(private_key, rpc_url):
         logger.debug('开始借款')
         balance = bera.bend_contract.functions.getUserAccountData(account.address).call()[2]
         # logger.debug(balance)
-        result = bera.bend_borrow(int(balance * 0.8 * 1e10), honey_address)
+        result = bera.bend_borrow(int(balance * 1.0 * random.randint(50, 80) / 100 * 1e10), honey_address)
         # logger.debug(result)
         logger.success(f'借款成功,{result}')
 
@@ -46,7 +46,7 @@ def bend_interacte_(private_key, rpc_url):
         repay_amount = call_result[0][0][4]
         # logger.debug(repay_amount)
         # repay
-        result = bera.bend_repay(int(repay_amount * 0.9), honey_address)
+        result = bera.bend_repay(int(repay_amount * 1.0 * random.randint(60, 90) / 100), honey_address)
         # logger.debug(result)
         logger.success(f'赎回成功,{result}')
         logger.debug('-------------------------------------------------------------------------------------')
