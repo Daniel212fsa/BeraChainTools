@@ -23,8 +23,6 @@ def interacte(arg):
         account = Account.from_key(private_key)
         account_address = account.address
         logger.debug(f"第{index}次交互,地址:{account_address}")
-        logger.debug(f"第{index}次交互,无需重复交互")
-
         bera = BeraChainTools(private_key=private_key, client_key=client_key, solver_provider=solver_provider,
                               rpc_url=rpc_url)
         has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
@@ -68,9 +66,9 @@ if __name__ == '__main__':
     # 是否为初始化钱包模式
     mode_init_wallet = False
     # 只领水
-    only_claim = False
+    only_claim = True
     # 只交互
-    on_action = True
+    on_action = False
     config = configparser.ConfigParser()
     config.read('config.ini')
     file_path = config.get('app', 'file_path')
@@ -94,7 +92,10 @@ if __name__ == '__main__':
         args = []
         with open(file_path, 'r') as file:
             for private_key in file:
-                args.append([private_key.strip(), rpc_url, proxy_url, solver_provider, client_key])
+                private_key_str = private_key.strip()
+                private_key_item = private_key_str.split(",")
+                private_key_show = private_key_item[0]
+                args.append([private_key_show, rpc_url, proxy_url, solver_provider, client_key])
         random.shuffle(args)
         args2 = []
         index = 0
@@ -104,13 +105,3 @@ if __name__ == '__main__':
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             # 将任务提交给线程池
             results = list(executor.map(interacte, args2))
-        # for i in private_keys:
-        #     interaction_count += 1
-        #     account = Account.from_key(i)
-        #     logger.debug(
-        #         f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{i}')
-        #     start_time = time.time()
-        #     interacte(i, rpc_url, proxy_url, solver_provider, client_key)
-        #     end_time = time.time()
-        #     logger.success(f'交互完成，账户为：{i},用时:{end_time - start_time}')
-        #     logger.debug('\n\n\n\n\n')

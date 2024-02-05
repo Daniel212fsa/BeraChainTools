@@ -134,7 +134,7 @@ class BeraChainTools(object):
         if not google_token:
             raise ValueError('获取google token 出错')
         user_agent = self.fake.chrome()
-        url = 'https://artio-80085-faucet-api-recaptcha.berachain.com/api/claim?address=' + self.account.address
+        url = 'https://artio-80085-faucet-api-recaptcha.berachain.com/api/claim'
         host = 'artio-80085-faucet-api-recaptcha.berachain.com'
         headers = {
             'authority': host,
