@@ -1,13 +1,12 @@
+import time
+
 from eth_account import Account
 from loguru import logger
 import requests
 from bera_tools import BeraChainTools
-import configparser
-import os
 import concurrent.futures
+import redis
 
-
-# from proxy_utils import get_proxy
 
 def get_proxy(proxy_url):
     aaa = requests.get(proxy_url).text
@@ -21,6 +20,11 @@ def get_proxy(proxy_url):
 
 
 def generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file_path, max_workers):
+    use_redis_mode = True
+    if use_redis_mode:
+        pool = redis.ConnectionPool(host='127.0.0.1')
+        r = redis.Redis(connection_pool=pool)
+
     def generate_account(i):
         try:
             logger.debug(f'Generating account {i + 1}')
@@ -29,30 +33,35 @@ def generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file
             logger.debug(f'Key: {account.key.hex()}')
             bera = BeraChainTools(private_key=account.key, client_key=client_key, solver_provider=solver_provider,
                                   rpc_url=rpc_url)
-            result = bera.claim_bera(proxies=get_proxy(proxy_url))
-            if 'Txhash' in result.text or 'to the queue' in result.text:
-                logger.success(f'领水成功,{result.text}\n')
-                with open(file_path, 'a') as f:
-                    f.write(account.key.hex() + '\n')
+
+            proxies_to = {}
+            if use_redis_mode:
+                for i in range(10):
+                    proxies = get_proxy(proxy_url)
+                    is_used = r.get(proxies['http'])
+                    if is_used is None:
+                        r.set(proxies['http'], proxies['http'])
+                        proxies_to = proxies
+                        break
+                    else:
+                        logger.error(f'领水失败,代理重复了\n')
+                        time.sleep(1)
             else:
-                logger.error(f'领水失败,{result.text}\n')
+                proxies = get_proxy(proxy_url)
+                proxies_to = proxies
+
+            if 'http' in proxies_to:
+                result = bera.claim_bera(proxies=proxies_to)
+                if 'Txhash' in result.text or 'to the queue' in result.text:
+                    logger.success(f'领水成功,{result.text}\n')
+                    with open(file_path, 'a') as f:
+                        f.write(account.key.hex() + '\n')
+                else:
+                    logger.error(f'领水失败,{result.text}\n')
+            else:
+                logger.error(f'没有正确的代理')
         except Exception as e:
-            logger.error(e)
+            logger.error(f'领水失败,{e}')
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         executor.map(generate_account, range(count))
-    # for i in range(count):
-    #     try:
-    #         logger.debug(f'生成第{i + 1}个账号')
-    #         account = Account.create()
-    #         # print(vars(account))
-    #         logger.debug(f'address:{account.address}')
-    #         logger.debug(f'key:{account.key.hex()}')
-    #         bera = BeraChainTools(private_key=account.key, client_key=client_key, solver_provider=solver_provider,
-    #                               rpc_url=rpc_url)
-    #         result = bera.claim_bera(proxies=get_proxy(proxy_url))
-    #         logger.debug(f'{result.text}\n')
-    #         with open(file_path, 'a') as f:
-    #             f.write(account.key.hex() + '\n')
-    #     except Exception as e:
-    #         logger.error(e)

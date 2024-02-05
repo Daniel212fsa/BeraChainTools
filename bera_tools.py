@@ -95,6 +95,7 @@ class BeraChainTools(object):
                      "type": "ReCaptchaV3TaskProxyless", }, 'appId': '34119'}
         response = self.session.post(url='https://api.ez-captcha.com/createTask', json=json_data).json()
         if response['errorId'] != 0:
+            logger.error(f'获取google token 出错，{response}')
             raise ValueError(response)
         task_id = response['taskId']
         time.sleep(5)
