@@ -1,17 +1,18 @@
-import random
-import os
-import time
 import configparser
+import os
+import random
+import time
+
 from eth_account import Account
 from loguru import logger
 
+from bera_tools import BeraChainTools
 from utils.bend_interaction_utils import bend_interacte
 from utils.bex_interaction_utils import bex_interacte
 from utils.deploy_contract import deploy_contract
 from utils.honey_interaction_utils import honey_interacte
 from utils.honeyjar_interaction_utils import honeyjar_interacte
 from utils.waters_utils import generate_wallet
-from bera_tools import BeraChainTools
 from utils.waters_utils import get_proxy
 
 
@@ -66,20 +67,21 @@ if __name__ == '__main__':
     if mode_init_wallet:
         generate_wallet(1, rpc_url, proxy_url, solver_provider, client_key, file_path)
     else:
-        interaction_count = 0  # 初始化交互计数器
-        with open(file_path, 'r') as file:
+        while True:
+            interaction_count = 0  # 初始化交互计数器
+            with open(file_path, 'r') as file:
 
-            # 逐行读取文件
-            k = 0
-            for private_key in file:
-                k += 1
-                if k > 0:
-                    interaction_count += 1  # 每次开始交互时增加计数器
-                    account = Account.from_key(private_key.strip())
-                    logger.debug(
-                        f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{private_key.strip()}')
-                    start_time = time.time()
-                    interacte(private_key.strip(), rpc_url, proxy_url, solver_provider, client_key)
-                    end_time = time.time()
-                    logger.success(f'交互完成，账户为：{private_key.strip()},用时:{end_time-start_time}')
-                    logger.debug('\n\n\n\n\n')
+                # 逐行读取文件
+                k = 0
+                for private_key in file:
+                    k += 1
+                    if k > 0:
+                        interaction_count += 1  # 每次开始交互时增加计数器
+                        account = Account.from_key(private_key.strip())
+                        logger.debug(
+                            f'第{++interaction_count}次开始交互，账户地址为：{account.address}，账户私钥为：{private_key.strip()}')
+                        start_time = time.time()
+                        interacte(private_key.strip(), rpc_url, proxy_url, solver_provider, client_key)
+                        end_time = time.time()
+                        logger.success(f'交互完成，账户为：{private_key.strip()},用时:{end_time - start_time}')
+                        logger.debug('\n\n\n\n\n')

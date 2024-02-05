@@ -2,7 +2,7 @@ import time
 
 from eth_account import Account
 from loguru import logger
-
+import random
 from bera_tools import BeraChainTools
 from config.address_config import honey_swap_address, usdc_address, honey_address
 
@@ -25,7 +25,7 @@ def honey_interacte_(private_key, rpc_url):
 
         # 使用usdc mint honey
         usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
-        result = bera.honey_mint(int(usdc_balance * 0.5))
+        result = bera.honey_mint(int(usdc_balance * 1.0 * random.randint(10, 30) / 100))
         # logger.debug(result)
         logger.success(f'STGUSDC转换HONEY成功,{result}')
 
@@ -35,7 +35,7 @@ def honey_interacte_(private_key, rpc_url):
         # logger.debug(approve_result)
         # 赎回
         honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
-        result = bera.honey_redeem(int(honey_balance * 0.5))
+        result = bera.honey_redeem(int(honey_balance * 1.0 * random.randint(10, 30) / 100))
         # logger.debug(result)
         logger.success(f'HONEY转换STGUSDC成功,赎回成功！！！,{result}')
         logger.debug('-------------------------------------------------------------------------------------')
