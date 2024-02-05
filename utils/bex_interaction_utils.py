@@ -1,6 +1,8 @@
+import random
+
 from eth_account import Account
 from loguru import logger
-import random
+
 from bera_tools import BeraChainTools
 from config.address_config import (
     usdc_address, wbear_address, weth_address, bex_approve_liquidity_address,
@@ -19,9 +21,9 @@ def bex_interacte(private_key, rpc_url):
             bera_balance = bera.w3.eth.get_balance(account.address)
             usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
             if usdc_balance > 0:
-                print("已兑换过usdc")
+                logger.debug("已兑换过usdc")
+                logger.debug(f'usdc_balance:{usdc_balance}')
                 break
-            print('usdc_balance', usdc_balance)
             result = bera.bex_swap(int(bera_balance * 1.0 * random.randint(10, 30) / 100), wbear_address, usdc_address)
             if result:
                 logger.success(f'bex 使用bera交换usdc成功！！！,{result}')
@@ -37,9 +39,9 @@ def bex_interacte(private_key, rpc_url):
             bera_balance = bera.w3.eth.get_balance(account.address)
             weth_balance = bera.weth_contract.functions.balanceOf(account.address).call()
             if weth_balance > 0:
-                print("已兑换过weth")
+                logger.debug("已兑换过weth")
+                logger.debug(f'weth_balance:{weth_balance}')
                 break
-            print('weth_balance', weth_balance)
             result = bera.bex_swap(int(bera_balance * 1.0 * random.randint(10, 30) / 100), wbear_address, weth_address)
             if result:
                 logger.success(f'bex 使用bera交换weth成功！！！,{result}')
@@ -56,7 +58,8 @@ def bex_interacte(private_key, rpc_url):
             # logger.debug(approve_result)
             # bex 增加 usdc 流动性
             usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
-            result = bera.bex_add_liquidity(int(usdc_balance * 1.0 * random.randint(10, 30) / 100), usdc_pool_liquidity_address, usdc_address)
+            result = bera.bex_add_liquidity(int(usdc_balance * 1.0 * random.randint(10, 30) / 100),
+                                            usdc_pool_liquidity_address, usdc_address)
             if result:
                 logger.success(f'bex 增加 usdc 流动性成功！！！,{result}')
                 break
@@ -72,7 +75,8 @@ def bex_interacte(private_key, rpc_url):
             # logger.debug(approve_result)
             # bex 增加 weth 流动性
             weth_balance = bera.weth_contract.functions.balanceOf(account.address).call()
-            result = bera.bex_add_liquidity(int(weth_balance * 1.0 * random.randint(10, 30) / 100), weth_pool_liquidity_address, weth_address)
+            result = bera.bex_add_liquidity(int(weth_balance * 1.0 * random.randint(10, 30) / 100),
+                                            weth_pool_liquidity_address, weth_address)
             if result:
                 logger.success(f'bex 增加 weth 流动性成功！！！,{result}')
                 break

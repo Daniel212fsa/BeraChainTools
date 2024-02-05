@@ -22,7 +22,7 @@ def interacte(private_key, rpc_url, proxy_url, solver_provider, client_key):
                           rpc_url=rpc_url)
     for i in range(3):
         balance = bera.get_balance()
-        print("测试币余额", balance)
+        logger.debug("测试币余额", balance)
         if balance == 0:
             try:
                 result = bera.claim_bera(proxies=get_proxy(proxy_url))
