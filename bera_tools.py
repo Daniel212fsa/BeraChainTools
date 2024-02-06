@@ -18,7 +18,7 @@ from loguru import logger
 from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi
 from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
-    ooga_booga_address
+    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address
 
 
 def get_proxy(proxy_url):
@@ -49,7 +49,7 @@ class BeraChainTools(object):
         self.fake = Faker()
         self.account = Account.from_key(self.private_key)
         self.session = requests.session()
-        self.w3 = Web3(Web3.HTTPProvider(self.rpc_url))
+        self.w3 = Web3(Web3.HTTPProvider(endpoint_uri=self.rpc_url))
         self.bex_contract = self.w3.eth.contract(address=bex_swap_address, abi=bex_abi)
         self.honey_swap_contract = self.w3.eth.contract(address=honey_swap_address, abi=honey_abi)
         self.usdc_contract = self.w3.eth.contract(address=usdc_address, abi=erc_20_abi)
@@ -58,6 +58,10 @@ class BeraChainTools(object):
         self.bend_contract = self.w3.eth.contract(address=bend_address, abi=bend_abi)
         self.bend_borrows_contract = self.w3.eth.contract(address=bend_borrows_address, abi=bend_borrows_abi)
         self.ooga_booga_contract = self.w3.eth.contract(address=ooga_booga_address, abi=ooga_booga_abi)
+        self.aweth_contract = self.w3.eth.contract(address=aweth_address, abi=erc_20_abi)
+        self.ahoney_contract = self.w3.eth.contract(address=ahoney_address, abi=erc_20_abi)
+        # 借贷的凭据
+        self.vdhoney_contract = self.w3.eth.contract(address=vdhoney_address, abi=erc_20_abi)
 
     def get_2captcha_google_token(self) -> Union[bool, str]:
         if self.client_key == '':
@@ -374,7 +378,7 @@ class BeraChainTools(object):
         # logger.debug(f'HONEY转换STGUSDC成功,{transaction_receipt.status}')
         # return order_hash.hex()
 
-    def bend_deposit(self, amount_in: int, amount_in_token_address: Union[Address]) -> str:
+    def bend_deposit(self, amount_in: int, amount_in_token_address: Union[Address]) -> bool:
         """
         bend deposit
         :param amount_in: 数量
@@ -392,10 +396,15 @@ class BeraChainTools(object):
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # logger.debug(f'存钱成功,{transaction_receipt.status}')
-        return order_hash.hex()
+        if transaction_receipt.status == 1:
+            return True
+        else:
+            return False
 
-    def bend_borrow(self, amount_out: int, asset_token_address: Union[Address]) -> str:
+        # # logger.debug(f'存钱成功,{transaction_receipt.status}')
+        # return order_hash.hex()
+
+    def bend_borrow(self, amount_out: int, asset_token_address: Union[Address]) -> bool:
         """
         bend borrow
         :param amount_out: 数量
@@ -410,10 +419,14 @@ class BeraChainTools(object):
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        if transaction_receipt.status == 1:
+            return True
+        else:
+            return False
         # logger.debug(f'借款成功,{transaction_receipt.status}')
-        return order_hash.hex()
+        # return order_hash.hex()
 
-    def bend_repay(self, repay_amount: int, asset_token_address: Union[Address]) -> str:
+    def bend_repay(self, repay_amount: int, asset_token_address: Union[Address]) -> bool:
         """
         bend 还款
         :param repay_amount:还款数量
@@ -427,8 +440,10 @@ class BeraChainTools(object):
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-        # logger.debug(f'还款成功,{transaction_receipt.status}')
-        return order_hash.hex()
+        if transaction_receipt.status == 1:
+            return True
+        else:
+            return False
 
     def honey_jar_mint(self):
         honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
