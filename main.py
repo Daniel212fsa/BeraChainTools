@@ -111,6 +111,6 @@ if __name__ == '__main__':
         for item in args:
             args2.append([index, item[0], item[1], item[2], item[3], item[4], only_claim, on_action])
             index += 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # 将任务提交给线程池
             results = list(executor.map(interacte, args2))
