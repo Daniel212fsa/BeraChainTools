@@ -10,10 +10,10 @@ from config.address_config import honey_swap_address, usdc_address, honey_addres
 def honey_interacte(private_key, rpc_url, index):
     for _ in range(10):
         if honey_interacte_1(private_key, rpc_url, index):
-            return
+            break
     for _ in range(10):
         if honey_interacte_2(private_key, rpc_url, index):
-            return
+            break
 
 
 def honey_interacte_1(private_key, rpc_url, index):
@@ -39,7 +39,7 @@ def honey_interacte_1(private_key, rpc_url, index):
             logger.error(f'第{index}次交互:{account_address},授权失败')
             return False
     except Exception as e:
-        logger.error(e)
+        logger.error(f'第{index}次交互:{account_address},{e}')
         return False
 
 
@@ -66,5 +66,5 @@ def honey_interacte_2(private_key, rpc_url, index):
             logger.error(f'第{index}次交互:{account_address},授权失败')
             return False
     except Exception as e:
-        logger.error(e)
+        logger.error(f'第{index}次交互:{account_address},{e}')
         return False

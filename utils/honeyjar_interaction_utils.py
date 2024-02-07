@@ -13,7 +13,7 @@ from config.address_config import ooga_booga_address, honey_address, wbear_addre
 def honeyjar_interacte(private_key, rpc_url, index):
     for _ in range(10):
         if honeyjar_interacte_(private_key, rpc_url, index):
-            return
+            break
 
 
 def honeyjar_interacte_(private_key, rpc_url, index):

@@ -12,7 +12,7 @@ from config.address_config import bend_address, weth_address, honey_address, ben
 def bend_interacte(private_key, rpc_url, index):
     for _ in range(10):
         if bend_interacte_(private_key, rpc_url, index):
-            return
+            break
 
 
 def bend_interacte_(private_key, rpc_url, index):
@@ -84,6 +84,6 @@ def bend_interacte_(private_key, rpc_url, index):
             logger.success(f'第{index}次交互,不用还款')
             return True
     except Exception as e:
-        logger.error(e)
-        time.sleep(5)
+        logger.error(f'第{index}次交互,{e}')
+        # time.sleep(5)
         return False

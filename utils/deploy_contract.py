@@ -12,7 +12,7 @@ from bera_tools import BeraChainTools
 def deploy_contract(private_key, rpc_url, index):
     for _ in range(10):
         if deploy_contract_(private_key, rpc_url, index):
-            return
+            break
 
 
 def deploy_contract_(private_key, rpc_url, index):

@@ -29,9 +29,9 @@ def interacte(arg):
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
         has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
-        # if has_mint:
-        #     logger.debug(f"第{index}次交互,无需重复交互")
-        #     return
+        if has_mint:
+            logger.debug(f"第{index}次交互,无需重复交互")
+            return
         if not on_action:
             for i in range(10):
                 balance = bera.get_balance()
@@ -55,8 +55,13 @@ def interacte(arg):
             bex_interacte(private_key, rpc_url, index)
             steps = [
                 honey_interacte,
-                bend_interacte,
                 honeyjar_interacte,
+            ]
+            random.shuffle(steps)
+            for step in steps:
+                step(private_key, rpc_url, index)
+            steps = [
+                bend_interacte,
                 deploy_contract
             ]
             random.shuffle(steps)
