@@ -8,6 +8,7 @@ from loguru import logger
 from utils.bend_interaction_utils import bend_interacte
 from utils.bex_interaction_utils import bex_interacte
 from utils.deploy_contract import deploy_contract
+from utils.honetjar_nft_mint import nft_mint
 from utils.honey_interaction_utils import honey_interacte
 from utils.honeyjar_interaction_utils import honeyjar_interacte
 from utils.waters_utils import generate_wallet
@@ -17,9 +18,9 @@ import concurrent.futures
 from functools import partial
 
 
-def interacte(arg):
+def only_claim(arg):
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
     try:
-        index, private_key, rpc_url, proxy_url, solver_provider, client_key, only_claim, on_action = arg
         account = Account.from_key(private_key)
         account_address = account.address
         logger.debug(f"第{index}次交互,地址:{account_address}")
@@ -28,28 +29,75 @@ def interacte(arg):
                               client_key=client_key,
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
-        has_mint = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
+        for i in range(10):
+            balance = bera.get_balance()
+            logger.debug(f"第{index}次交互,测试币余额 {balance / 10 ** 18}")
+            if balance < 4 * 10 ** 16:
+                try:
+                    result = bera.claim_bera(proxies=get_proxy(proxy_url))
+                    if 'Txhash' in result.text or 'to the queue' in result.text:
+                        logger.success(f'第{index}次交互,领水成功,{result.text}\n')
+                        break
+                    else:
+                        logger.error(f'第{index}次交互,领水失败,{result.text}\n')
+                except Exception as e:
+                    logger.error(f'第{index}次交互,领水失败,{e}\n')
+            else:
+                break
+    except Exception as e:
+        logger.error(f'第{index}次交互,领水失败,{e}')
+
+
+def only_mint(arg):
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        balance = bera.get_balance()
+        if balance > 0:
+            nft_mint(private_key, rpc_url, index)
+        else:
+            logger.error(f'第{index}次交互失败,没有测试币')
+    except Exception as e:
+        logger.error(f'第{index}次交互,{e}')
+
+
+def claim_and_action(arg):
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        has_mint = bera.nft_contract.functions.hasMinted(account.address).call()
         if has_mint:
             logger.debug(f"第{index}次交互,无需重复交互")
             return
-        if not on_action:
-            for i in range(10):
-                balance = bera.get_balance()
-                logger.debug(f"第{index}次交互,测试币余额 {balance / 10 ** 18}")
-                if balance < 4 * 10 ** 16:
-                    try:
-                        result = bera.claim_bera(proxies=get_proxy(proxy_url))
-                        if 'Txhash' in result.text or 'to the queue' in result.text:
-                            logger.success(f'第{index}次交互,领水成功,{result.text}\n')
-                            break
-                        else:
-                            logger.error(f'第{index}次交互,领水失败,{result.text}\n')
-                    except Exception as e:
-                        logger.error(f'第{index}次交互,领水失败,{e}\n')
-                else:
-                    break
-        if only_claim:
-            return
+        for i in range(10):
+            balance = bera.get_balance()
+            logger.debug(f"第{index}次交互,测试币余额 {balance / 10 ** 18}")
+            if balance < 4 * 10 ** 16:
+                try:
+                    result = bera.claim_bera(proxies=get_proxy(proxy_url))
+                    if 'Txhash' in result.text or 'to the queue' in result.text:
+                        logger.success(f'第{index}次交互,领水成功,{result.text}\n')
+                        break
+                    else:
+                        logger.error(f'第{index}次交互,领水失败,{result.text}\n')
+                except Exception as e:
+                    logger.error(f'第{index}次交互,领水失败,{e}\n')
+            else:
+                break
         balance = bera.get_balance()
         if balance > 0:
             bex_interacte(private_key, rpc_url, index)
@@ -60,6 +108,7 @@ def interacte(arg):
             random.shuffle(steps)
             for step in steps:
                 step(private_key, rpc_url, index)
+            nft_mint(private_key, rpc_url, index)
             steps = [
                 bend_interacte,
                 deploy_contract
@@ -74,10 +123,6 @@ def interacte(arg):
 if __name__ == '__main__':
     # 是否为初始化钱包模式
     mode_init_wallet = False
-    # 只领水
-    only_claim = False
-    # 只交互
-    on_action = True
     config = configparser.ConfigParser()
     config.read('config.ini')
     file_path = config.get('app', 'file_path')
@@ -94,7 +139,7 @@ if __name__ == '__main__':
         # 预期领水的地址数
         count = 1800
         # 线程数
-        max_workers = 3
+        max_workers = 5
         generate_wallet(count, rpc_url, proxy_url, solver_provider, client_key, file_path, max_workers)
     else:
         interaction_count = 0  # 初始化交互计数器
@@ -105,12 +150,14 @@ if __name__ == '__main__':
                 private_key_item = private_key_str.split(",")
                 private_key_show = private_key_item[0]
                 args.append([private_key_show, rpc_url, proxy_url, solver_provider, client_key])
+                # break
         random.shuffle(args)
         args2 = []
         index = 0
         for item in args:
-            args2.append([index, item[0], item[1], item[2], item[3], item[4], only_claim, on_action])
+            args2.append([index, item[0], item[1], item[2], item[3], item[4]])
             index += 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        modeList = [only_claim, only_mint, claim_and_action]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             # 将任务提交给线程池
-            results = list(executor.map(interacte, args2))
+            results = list(executor.map(modeList[1], args2))

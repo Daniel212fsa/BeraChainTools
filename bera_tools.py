@@ -15,10 +15,10 @@ from solcx import compile_source, set_solc_version
 from web3 import Web3
 from loguru import logger
 
-from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi
+from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi, nft_abi
 from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
-    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address
+    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address
 
 
 def get_proxy(proxy_url):
@@ -62,6 +62,7 @@ class BeraChainTools(object):
         self.ahoney_contract = self.w3.eth.contract(address=ahoney_address, abi=erc_20_abi)
         # 借贷的凭据
         self.vdhoney_contract = self.w3.eth.contract(address=vdhoney_address, abi=erc_20_abi)
+        self.nft_contract = self.w3.eth.contract(address=nft_address, abi=nft_abi)
 
     def get_2captcha_google_token(self) -> Union[bool, str]:
         if self.client_key == '':
@@ -196,13 +197,39 @@ class BeraChainTools(object):
         :param approve_token_address: 需要授权的代币地址
         :return: hash
         """
+        # if spender == nft_address:
+        #     signed_txn = self.w3.eth.account.sign_transaction(
+        #         dict(
+        #             chainId=80085,
+        #             nonce=self.get_nonce(),
+        #             gasPrice=int(self.w3.eth.gas_price * 1.15),
+        #             gas=134500 + random.randint(1, 10000),
+        #             to=self.w3.to_checksum_address(approve_token_address),
+        #             data='0x095ea7b3000000000000000000000000dc094eac7cc01224e798f34543a8f9e9d25594790000000000000000000000000000000000000000000000056bc75e2d63100000',  # 0xa6f2ae3a
+        #         ),
+        #         self.account.key)
+        #     order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        #     transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        #     if transaction_receipt.status == 1:
+        #         # logger.debug(f'授权成功,{transaction_receipt.status}')
+        #         return True
+        #     else:
+        #         # logger.debug(f'授权失败,{transaction_receipt.status}')
+        #         return False
+        # # if spender == nft_address:
+        # #     amount = 18
         approve_contract = self.w3.eth.contract(address=approve_token_address, abi=erc_20_abi)
         allowance_balance = approve_contract.functions.allowance(self.account.address, spender).call()
         if allowance_balance > amount:
-            # logger.debug(f'已授权,无须重复授权！')
+            logger.debug(f'已授权,无须重复授权！')
             return True
-        # 无限授权
-        txn = approve_contract.functions.approve(spender, int("0x" + "f" * 64, 16)).build_transaction(
+            # 无限授权
+            # approve_amount = 0
+            # if spender == nft_address:
+            #     approve_amount = 18*10**18
+            # else:
+        approve_amount = int("0x" + "f" * 64, 16)
+        txn = approve_contract.functions.approve(spender, approve_amount).build_transaction(
             {
                 'gas': 500000 + random.randint(1, 10000),
                 'gasPrice': int(self.w3.eth.gas_price * 1.15),
@@ -492,6 +519,26 @@ class BeraChainTools(object):
                 data='0xa6f2ae3a',
             ),
             self.account.key)
+        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        if transaction_receipt.status == 1:
+            # logger.debug(f'mint成功,{transaction_receipt.status}')
+            return True
+        else:
+            # logger.debug(f'mint失败,{transaction_receipt.status}')
+            return False
+
+    def nft_mint(self):
+        has_mint = self.nft_contract.functions.hasMinted(self.account.address).call()
+        if has_mint:
+            # logger.debug(f'已mint！')
+            return True
+        txn = self.nft_contract.functions.buy().build_transaction(
+            {
+                'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'nonce': self.get_nonce()
+            })
+        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
         if transaction_receipt.status == 1:

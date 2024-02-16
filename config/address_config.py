@@ -25,3 +25,4 @@ ooga_booga_address = w3.to_checksum_address('0x6553444CaA1d4FA329aa9872008ca70AE
 ahoney_address = w3.to_checksum_address('0xc63FAb87Cb00249190577937Ab6E04dA0AE69633')
 vdhoney_address = w3.to_checksum_address('0x7f8E75356015fECfafF66e2B34F181A093Dc4519')
 aweth_address = w3.to_checksum_address('0xa9277257eA552b2673FB02EF36F070733bB01188')
+nft_address = w3.to_checksum_address('0xDc094eaC7CC01224E798F34543a8F9e9D2559479')
