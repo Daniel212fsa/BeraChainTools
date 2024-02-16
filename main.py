@@ -158,6 +158,6 @@ if __name__ == '__main__':
             args2.append([index, item[0], item[1], item[2], item[3], item[4]])
             index += 1
         modeList = [only_claim, only_mint, claim_and_action]
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # 将任务提交给线程池
             results = list(executor.map(modeList[1], args2))

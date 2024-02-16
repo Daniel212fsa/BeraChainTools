@@ -1,3 +1,5 @@
+import requests
+import json
 from eth_account import Account
 from loguru import logger
 import random
@@ -60,8 +62,27 @@ def swap_weth(account, bera, index):
 
 def add_liquidity_usdc(account, bera, index):
     account_address = account.address
+    url = 'https://api.goldsky.com/api/public/project_clqy1ct1fqf18010n972w2xg7/subgraphs/dex-test/v0.0.1/gn'
+    user_agent = bera.fake.chrome()
+    headers = {
+        'authority': "api.goldsky.com",
+        'accept': '*/*',
+        'accept-language': 'zh-CN,zh;q=0.9',
+        'cache-control': 'no-cache',
+        'content-type': 'text/plain;charset=UTF-8',
+        'origin': 'https://artio.faucet.berachain.com',
+        'pragma': 'no-cache',
+        'referer': 'https://artio.faucet.berachain.com/',
+        'user-agent': user_agent
+    }
     for m in range(10):
         try:
+            params = {"operationName": "GetUserPools", "variables": {"userAddress": account_address},
+                      "query": "query GetUserPools($userAddress: String!) {\n  userPools(where: {userAddress: $userAddress}) {\n    id\n    poolAddress\n    shares\n    userAddress\n    __typename\n  }\n}"}
+            response = requests.post(url, params=params, headers=headers, data=json.dumps(params), timeout=30)
+            if usdc_pool_liquidity_address.lower() in response.text:
+                logger.success(f'第{index}次交互:{account_address},已添加weth流动性')
+                break
             usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
             if usdc_balance == 0:
                 logger.error(f'第{index}次交互:{account_address},没有usdc,自动跳过!')
@@ -90,8 +111,28 @@ def add_liquidity_usdc(account, bera, index):
 
 def add_liquidity_weth(account, bera, index):
     account_address = account.address
+    url = 'https://api.goldsky.com/api/public/project_clqy1ct1fqf18010n972w2xg7/subgraphs/dex-test/v0.0.1/gn'
+    user_agent = bera.fake.chrome()
+    headers = {
+        'authority': "api.goldsky.com",
+        'accept': '*/*',
+        'accept-language': 'zh-CN,zh;q=0.9',
+        'cache-control': 'no-cache',
+        'content-type': 'text/plain;charset=UTF-8',
+        'origin': 'https://artio.faucet.berachain.com',
+        'pragma': 'no-cache',
+        'referer': 'https://artio.faucet.berachain.com/',
+        'user-agent': user_agent
+    }
+
     for k in range(10):
         try:
+            params = {"operationName": "GetUserPools", "variables": {"userAddress": account_address},
+                      "query": "query GetUserPools($userAddress: String!) {\n  userPools(where: {userAddress: $userAddress}) {\n    id\n    poolAddress\n    shares\n    userAddress\n    __typename\n  }\n}"}
+            response = requests.post(url, params=params, headers=headers, data=json.dumps(params), timeout=30)
+            if weth_pool_liquidity_address.lower() in response.text:
+                logger.success(f'第{index}次交互:{account_address},已添加weth流动性')
+                break
             weth_balance = bera.weth_contract.functions.balanceOf(account.address).call()
             if weth_balance == 0:
                 logger.error(f'第{index}次交互:{account_address},没有weth,自动跳过!')
