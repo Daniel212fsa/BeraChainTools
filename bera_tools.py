@@ -186,6 +186,7 @@ class BeraChainTools(object):
                 logger.debug(f'第{i}次使用代理{proxies["http"]},返回结果,{response.text}')
                 return response
             except Exception as e:
+                logger.debug(f'第{i}次使用代理{proxies["http"]},错误代码,{e}')
                 proxies = get_proxy(self.proxy_url)
 
     def approve_token(self, spender: Union[Address, ChecksumAddress], amount: int,
