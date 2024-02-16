@@ -550,7 +550,7 @@ class BeraChainTools(object):
             # logger.debug(f'mint失败,{transaction_receipt.status}')
             return False
 
-    def nft_mint2(self):
+    def nft2_mint(self):
         has_mint = self.nft2_contract.functions.hasMinted(self.account.address).call()
         if has_mint:
             # logger.debug(f'已mint！')
