@@ -4,7 +4,8 @@ from eth_account import Account
 from loguru import logger
 
 from bera_tools import BeraChainTools
-from config.address_config import ooga_booga_address, honey_address, wbear_address, usdc_address, nft_address
+from config.address_config import ooga_booga_address, honey_address, wbear_address, usdc_address, nft_address, \
+    nft2_address
 
 
 # from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
@@ -94,7 +95,7 @@ def honeyjar2_interacte_(private_key, rpc_url, index):
         honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
         logger.debug(
             f'第{index}次交互:{account_address},usdc_balance:{usdc_balance / 10 ** 18},honey_balance:{honey_balance / 10 ** 18}')
-        approve_result = bera.approve_token(nft_address, 5 * 10 ** 18, honey_address)
+        approve_result = bera.approve_token(nft2_address, 5 * 10 ** 18, honey_address)
         if approve_result:
             if honey_balance < 30 * 10 ** 17:
                 for i in range(10):
@@ -105,7 +106,7 @@ def honeyjar2_interacte_(private_key, rpc_url, index):
             else:
                 logger.success(f'第{index}次交互:{account_address},无须兑换,直接mint nft2')
 
-            result = bera.nft_mint()
+            result = bera.nft2_mint()
             if result:
                 logger.success(f'第{index}次交互:{account_address},nft2 mint 交互成功,{result}')
                 logger.debug('-------------------------------------------------------------------------------------')

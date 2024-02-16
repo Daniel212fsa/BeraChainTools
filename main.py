@@ -101,17 +101,12 @@ def claim_and_action(arg):
         balance = bera.get_balance()
         if balance > 0:
             bex_interacte(private_key, rpc_url, index)
+            honey_interacte(private_key, rpc_url, index)
             steps = [
-                honey_interacte,
                 honeyjar_interacte,
-            ]
-            random.shuffle(steps)
-            for step in steps:
-                step(private_key, rpc_url, index)
-            nft_mint(private_key, rpc_url, index)
-            steps = [
                 bend_interacte,
-                deploy_contract
+                deploy_contract,
+                nft_mint
             ]
             random.shuffle(steps)
             for step in steps:
@@ -160,4 +155,4 @@ if __name__ == '__main__':
         modeList = [only_claim, only_mint, claim_and_action]
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # 将任务提交给线程池
-            results = list(executor.map(modeList[1], args2))
+            results = list(executor.map(modeList[2], args2))

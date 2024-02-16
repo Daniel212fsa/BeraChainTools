@@ -20,7 +20,11 @@ def honey_interacte_1(private_key, rpc_url, index):
     account = Account.from_key(private_key)
     account_address = account.address
     bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)
-
+    honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
+    if honey_balance > 0:
+        if honey_balance > 0:
+            logger.debug(f'第{index}次交互:{account_address},HONEY转换STGUSDC,无需重复')
+            return True
     try:
         logger.debug(f'第{index}次交互:{account_address},STGUSDC转换HONEY开始')
         usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
@@ -47,6 +51,10 @@ def honey_interacte_2(private_key, rpc_url, index):
     account = Account.from_key(private_key)
     account_address = account.address
     bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)
+    honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
+    if honey_balance > 0:
+        logger.debug(f'第{index}次交互:{account_address},HONEY转换STGUSDC,无需重复')
+        return True
     try:
         logger.debug(f'第{index}次交互:{account_address},HONEY转换STGUSDC开始')
         honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
