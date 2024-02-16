@@ -550,6 +550,26 @@ class BeraChainTools(object):
             # logger.debug(f'mint失败,{transaction_receipt.status}')
             return False
 
+    def nft_mint2(self):
+        has_mint = self.nft2_contract.functions.hasMinted(self.account.address).call()
+        if has_mint:
+            # logger.debug(f'已mint！')
+            return True
+        txn = self.nft2_contract.functions.buy().build_transaction(
+            {
+                'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'nonce': self.get_nonce()
+            })
+        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        if transaction_receipt.status == 1:
+            # logger.debug(f'mint成功,{transaction_receipt.status}')
+            return True
+        else:
+            # logger.debug(f'mint失败,{transaction_receipt.status}')
+            return False
+
     def deploy_contract(self, contract_source_code, solc_version):
         """
         部署合约
