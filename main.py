@@ -19,6 +19,7 @@ from functools import partial
 
 
 def only_claim(arg):
+    current_timestamp = time.time()
     index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
     try:
         account = Account.from_key(private_key)
@@ -36,19 +37,21 @@ def only_claim(arg):
                 try:
                     result = bera.claim_bera(proxies=get_proxy(proxy_url))
                     if 'Txhash' in result.text or 'to the queue' in result.text:
-                        logger.success(f'第{index}次交互,领水成功,{result.text}\n')
+                        logger.success(
+                            f'第{index}次交互,领水成功,耗时{time.time() - current_timestamp},{result.text}\n')
                         break
                     else:
-                        logger.error(f'第{index}次交互,领水失败,{result.text}\n')
+                        logger.error(f'第{index}次交互,领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
                 except Exception as e:
-                    logger.error(f'第{index}次交互,领水失败,{e}\n')
+                    logger.error(f'第{index}次交互,领水失败,耗时{time.time() - current_timestamp},{e}\n')
             else:
                 break
     except Exception as e:
-        logger.error(f'第{index}次交互,领水失败,{e}')
+        logger.error(f'第{index}次交互,领水失败,{e},耗时{time.time() - current_timestamp}')
 
 
 def only_mint(arg):
+    current_timestamp = time.time()
     index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
     try:
         account = Account.from_key(private_key)
@@ -62,13 +65,15 @@ def only_mint(arg):
         balance = bera.get_balance()
         if balance > 0:
             nft_mint(private_key, rpc_url, index)
+            logger.debug(f'第{index}次交互,交互结束,耗时{time.time() - current_timestamp}')
         else:
-            logger.error(f'第{index}次交互失败,没有测试币')
+            logger.error(f'第{index}次交互失败,没有测试币,耗时{time.time() - current_timestamp}')
     except Exception as e:
-        logger.error(f'第{index}次交互,{e}')
+        logger.error(f'第{index}次交互,{e},耗时{time.time() - current_timestamp}')
 
 
 def claim_and_action(arg):
+    current_timestamp = time.time()
     index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
     try:
         account = Account.from_key(private_key)
@@ -111,6 +116,9 @@ def claim_and_action(arg):
             random.shuffle(steps)
             for step in steps:
                 step(private_key, rpc_url, index)
+            logger.debug(f'第{index}次交互,交互结束,耗时{time.time() - current_timestamp}')
+        else:
+            logger.error(f'第{index}次交互,测试币不足,耗时{time.time() - current_timestamp}')
     except Exception as e:
         logger.error(f'第{index}次交互,{e}')
 
@@ -155,4 +163,4 @@ if __name__ == '__main__':
         modeList = [only_claim, only_mint, claim_and_action]
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # 将任务提交给线程池
-            results = list(executor.map(modeList[2], args2))
+            results = list(executor.map(modeList[1], args2))
