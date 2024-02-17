@@ -18,7 +18,7 @@ from loguru import logger
 from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi, nft_abi
 from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
-    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address,nft2_address
+    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address
 
 
 def get_proxy(proxy_url):
@@ -65,14 +65,47 @@ class BeraChainTools(object):
         self.nft_contract = self.w3.eth.contract(address=nft_address, abi=nft_abi)
         self.nft2_contract = self.w3.eth.contract(address=nft2_address, abi=nft_abi)
 
+    # def get_2captcha_google_token(self) -> Union[bool, str]:
+    #     if self.client_key == '':
+    #         raise ValueError('2captcha_client_key is null ')
+    #     params = {'key': self.client_key, 'method': 'userrecaptcha', 'version': 'v3', 'action': 'submit',
+    #               'min_score': 0.5,
+    #               'googlekey': '6LfOA04pAAAAAL9ttkwIz40hC63_7IsaU2MgcwVH',
+    #               'pageurl': 'https://artio.faucet.berachain.com/',
+    #               'json': 1}
+    #     response = requests.get(f'https://2captcha.com/in.php?', params=params).json()
+    #     if response['status'] != 1:
+    #         raise ValueError(response)
+    #     task_id = response['request']
+    #     for _ in range(60):
+    #         response = requests.get(
+    #             f'https://2captcha.com/res.php?key={self.client_key}&action=get&id={task_id}&json=1').json()
+    #         if response['status'] == 1:
+    #             return response['request']
+    #         else:
+    #             time.sleep(3)
+    #     return False
+
     def get_2captcha_google_token(self) -> Union[bool, str]:
         if self.client_key == '':
             raise ValueError('2captcha_client_key is null ')
-        params = {'key': self.client_key, 'method': 'userrecaptcha', 'version': 'v3', 'action': 'submit',
-                  'min_score': 0.5,
-                  'googlekey': '6LfOA04pAAAAAL9ttkwIz40hC63_7IsaU2MgcwVH',
-                  'pageurl': 'https://artio.faucet.berachain.com/',
-                  'json': 1}
+        # params = {
+        #     'key': self.client_key,
+        #     'method': 'userrecaptcha',
+        #     'version': 'v3',
+        #     'action': 'submit',
+        #           'min_score': 0.5,
+        #           'googlekey': '6LfOA04pAAAAAL9ttkwIz40hC63_7IsaU2MgcwVH',
+        #           'pageurl': 'https://artio.faucet.berachain.com/',
+        #           'json': 1
+        # }
+        params = {
+            "method": "turnstile",
+            "key": self.client_key,
+            "sitekey": "0x4AAAAAAARdAuciFArKhVwt",
+            "pageurl": "https://artio.faucet.berachain.com/",
+            "json": 1
+        }
         response = requests.get(f'https://2captcha.com/in.php?', params=params).json()
         if response['status'] != 1:
             raise ValueError(response)
@@ -107,6 +140,28 @@ class BeraChainTools(object):
                 time.sleep(2)
         return False
 
+    # def get_ez_captcha_google_token(self) -> Union[bool, str]:
+    #     if self.client_key == '':
+    #         raise ValueError('ez-captcha is null ')
+    #     json_data = {
+    #         "clientKey": self.client_key,
+    #         "task": {"websiteURL": "https://artio.faucet.berachain.com/",
+    #                  "websiteKey": "6LfOA04pAAAAAL9ttkwIz40hC63_7IsaU2MgcwVH",
+    #                  "type": "ReCaptchaV3TaskProxyless", }, 'appId': '34119'}
+    #     response = self.session.post(url='https://api.ez-captcha.com/createTask', json=json_data).json()
+    #     if response['errorId'] != 0:
+    #         logger.error(f'获取google token 出错，{response}')
+    #         raise ValueError(response)
+    #     task_id = response['taskId']
+    #     time.sleep(5)
+    #     for _ in range(30):
+    #         data = {"clientKey": self.client_key, "taskId": task_id}
+    #         response = requests.post(url='https://api.ez-captcha.com/getTaskResult', json=data).json()
+    #         if response['status'] == 'ready':
+    #             return response['solution']['gRecaptchaResponse']
+    #         else:
+    #             time.sleep(2)
+    #     return False
     def get_ez_captcha_google_token(self) -> Union[bool, str]:
         if self.client_key == '':
             raise ValueError('ez-captcha is null ')
@@ -117,7 +172,6 @@ class BeraChainTools(object):
                      "type": "ReCaptchaV3TaskProxyless", }, 'appId': '34119'}
         response = self.session.post(url='https://api.ez-captcha.com/createTask', json=json_data).json()
         if response['errorId'] != 0:
-            logger.error(f'获取google token 出错，{response}')
             raise ValueError(response)
         task_id = response['taskId']
         time.sleep(5)
@@ -160,8 +214,22 @@ class BeraChainTools(object):
         if not google_token:
             raise ValueError('获取google token 出错')
         user_agent = self.fake.chrome()
-        url = 'https://artio-80085-faucet-api-recaptcha.berachain.com/api/claim'
-        host = 'artio-80085-faucet-api-recaptcha.berachain.com'
+        # url = 'https://artio-80085-faucet-api-recaptcha.berachain.com/api/claim'
+        # host = 'artio-80085-faucet-api-recaptcha.berachain.com'
+        # headers = {
+        #     'authority': host,
+        #     'accept': '*/*',
+        #     'accept-language': 'zh-CN,zh;q=0.9',
+        #     'authorization': f'Bearer {google_token}',
+        #     'cache-control': 'no-cache',
+        #     'content-type': 'text/plain;charset=UTF-8',
+        #     'origin': 'https://artio.faucet.berachain.com',
+        #     'pragma': 'no-cache',
+        #     'referer': 'https://artio.faucet.berachain.com/',
+        #     'user-agent': user_agent
+        # }
+        url = 'https://artio-80085-faucet-api-cf.berachain.com/api/claim'
+        host = 'artio-80085-faucet-api-cf.berachain.com'
         headers = {
             'authority': host,
             'accept': '*/*',

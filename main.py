@@ -35,13 +35,14 @@ def only_claim(arg):
             logger.debug(f"第{index}次交互,测试币余额 {balance / 10 ** 18}")
             if balance < 4 * 10 ** 16:
                 try:
-                    result = bera.claim_bera(proxies=get_proxy(proxy_url))
-                    if 'Txhash' in result.text or 'to the queue' in result.text:
-                        logger.success(
-                            f'第{index}次交互,领水成功,耗时{time.time() - current_timestamp},{result.text}\n')
-                        break
-                    else:
-                        logger.error(f'第{index}次交互,领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
+                    pass
+                    # result = bera.claim_bera(proxies=get_proxy(proxy_url))
+                    # if 'Txhash' in result.text or 'to the queue' in result.text:
+                    #     logger.success(
+                    #         f'第{index}次交互,领水成功,耗时{time.time() - current_timestamp},{result.text}\n')
+                    #     break
+                    # else:
+                    #     logger.error(f'第{index}次交互,领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
                 except Exception as e:
                     logger.error(f'第{index}次交互,领水失败,耗时{time.time() - current_timestamp},{e}\n')
             else:
@@ -153,7 +154,7 @@ if __name__ == '__main__':
                 private_key_item = private_key_str.split(",")
                 private_key_show = private_key_item[0]
                 args.append([private_key_show, rpc_url, proxy_url, solver_provider, client_key])
-                # break
+                #break
         random.shuffle(args)
         args2 = []
         index = 0
@@ -163,4 +164,4 @@ if __name__ == '__main__':
         modeList = [only_claim, only_mint, claim_and_action]
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # 将任务提交给线程池
-            results = list(executor.map(modeList[1], args2))
+            results = list(executor.map(modeList[0], args2))
