@@ -3182,3 +3182,38 @@ nft_abi = [
         "type": "receive"
     }
 ]
+domain_abi = [
+    {
+        "inputs": [
+            {
+                "internalType": "string[]",
+                "name": "_strings",
+                "type": "string[]"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_uint",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "_addr1",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "_string1",
+                "type": "string"
+            },
+            {
+                "internalType": "address",
+                "name": "_addr2",
+                "type": "address"
+            }
+        ],
+        "name": "mintNative",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    }
+]

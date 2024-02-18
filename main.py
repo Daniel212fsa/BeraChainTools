@@ -4,6 +4,7 @@ import time
 import configparser
 from eth_account import Account
 from loguru import logger
+from utils.create_domain import create_domain_nft
 from utils.send_20 import send20
 from utils.bend_interaction_utils import bend_interacte
 from utils.bex_interaction_utils import bex_interacte
@@ -38,6 +39,30 @@ def only_send20(arg):
             logger.error(f'第{index}次交互失败,{account_address},没有测试币,耗时{time.time() - current_timestamp}')
     except Exception as e:
         logger.error(f'第{index}次交互,{account_address},领水失败,{e},耗时{time.time() - current_timestamp}')
+
+
+def only_create_domain_nft(arg):
+    name = '创建域名'
+    current_timestamp = time.time()
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        # logger.debug(f"第{index}次交互,地址:{account_address}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        balance = bera.get_balance()
+        if balance > 0:
+            create_domain_nft(private_key, rpc_url, index, try_times)
+            logger.debug(f'第{index}次交互,{account_address},{name},交互结束,耗时{time.time() - current_timestamp}')
+        else:
+            logger.error(
+                f'第{index}次交互失败,{account_address},{name},没有测试币,耗时{time.time() - current_timestamp}')
+    except Exception as e:
+        logger.error(f'第{index}次交互,{account_address},{name},{e},耗时{time.time() - current_timestamp}')
 
 
 def only_claim(arg):
@@ -227,15 +252,14 @@ if __name__ == '__main__':
                 private_key_show = private_key_item[0]
                 args.append([private_key_show, rpc_url, proxy_url, solver_provider, client_key, try_times])
                 op += 1
-                # if op > 6:
-                #     break
+                break
         random.shuffle(args)
         args2 = []
         index = 0
         for item in args:
             args2.append([index, item[0], item[1], item[2], item[3], item[4], item[5]])
             index += 1
-        modeList = [only_claim, only_mint, only_action, claim_and_action, only_send20]
+        modeList = [only_claim, only_mint, only_action, claim_and_action, only_send20, only_create_domain_nft]
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # 将任务提交给线程池
-            results = list(executor.map(modeList[4], args2))
+            results = list(executor.map(modeList[5], args2))

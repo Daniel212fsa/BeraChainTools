@@ -19,10 +19,11 @@ from loguru import logger
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi, nft_abi
+from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi, nft_abi, \
+    domain_abi
 from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
-    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address
+    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address, domain_address
 
 gas_rate = 1.05
 
@@ -94,6 +95,7 @@ class BeraChainTools(object):
         self.vdhoney_contract = self.w3.eth.contract(address=vdhoney_address, abi=erc_20_abi)
         self.nft_contract = self.w3.eth.contract(address=nft_address, abi=nft_abi)
         self.nft2_contract = self.w3.eth.contract(address=nft2_address, abi=nft_abi)
+        self.domain_contract = self.w3.eth.contract(address=domain_address, abi=domain_abi)
 
     # def get_2captcha_google_token(self) -> Union[bool, str]:
     #     if self.client_key == '':
@@ -695,6 +697,87 @@ class BeraChainTools(object):
             # else:
             #     # logger.debug(f'mint失败,{transaction_receipt.status}')
             #     return False
+        except Exception as e:
+            print(e)
+            return False
+
+    def create_domain(self):
+        try:
+            converted_d = [
+                "\U0001f642", "\U0001f600", "\U0001f604", "\U0001f601", "\U0001f606", "\U0001f605", "\U0001f923",
+                "\U0001f603",
+                "\U0001f972", "\U0001f60b", "\U0001f61b", "\U0001f61d", "\U0001f61c", "\U0001f9aa", "\U0001f9a8",
+                "\U0001fad0",
+                "\U0001f913", "\U0001f60e", "\U0001f615", "\U0001f641", "\U0001f623", "\U0001f616", "\U0001f62b",
+                "\U0001f629",
+                "\U0001f97a", "\U0001f622", "\U0001f62d", "\U0001f624", "\U0001f620", "\U0001f621", "\U0001f9ac",
+                "\U0001f9af",
+                "\U0001f633", "\U0001f975", "\U0001f976", "\U0001f631", "\U0001f628", "\U0001f630", "\U0001f625",
+                "\U0001f613",
+                "\U0001f617", "\U0001f627", "\U0001f62e", "\U0001f632", "\U0001f634", "\U0001f924", "\U0001f62a",
+                "\U0001f971",
+                "\U0001f922", "\U0001f92e", "\U0001f927", "\U0001f974", "\U0001f637", "\U0001f912", "\U0001f915",
+                "\U0001f911",
+                "\U0001f920", "\U0001f608", "\U0001f47f", "\U0001f479", "\U0001f47a", "\U0001f921", "\U0001f4a9",
+                "\U0001f47b",
+                "\U0001f480", "\U0001f47d", "\U0001f47e", "\U0001f916", "\U0001f383"
+            ]
+
+            converted_e = [
+                "\U0001f41d", "\U0001f435", "\U0001f412", "\U0001f98d", "\U0001f9a7", "\U0001f436", "\U0001f415",
+                "\U0001f9ae",
+                "\U0001f429", "\U0001f43a", "\U0001f98a", "\U0001f99d", "\U0001f431", "\U0001f408",
+                "\U0001f981", "\U0001f42f", "\U0001f405", "\U0001f406", "\U0001f434", "\U0001f40e", "\U0001f984",
+                "\U0001f993",
+                "\U0001f98c", "\U0001f42e", "\U0001f402", "\U0001f403", "\U0001f404", "\U0001f437", "\U0001f416",
+                "\U0001f417",
+                "\U0001f43d", "\U0001f40f", "\U0001f411", "\U0001f410", "\U0001f999", "\U0001f992", "\U0001f418",
+                "\U0001f98f",
+                "\U0001f99b", "\U0001f42d", "\U0001f401", "\U0001f400", "\U0001f439", "\U0001f430", "\U0001f407",
+                "\U0001f43f\uFE0F", "\U0001f994", "\U0001f987", "\U0001f43b", "\U0001f428", "\U0001f43c", "\U0001f9a5",
+                "\U0001f9a6", "\U0001f9a8",
+                "\U0001f998", "\U0001f9a1", "\U0001f93e", "\U0001f93f", "\U0001f525", "\U0001f308"
+            ]
+
+            converted_f = [
+                "\U0001F3EF", "\U0001F347", "\U0001F348", "\U0001F349", "\U0001F34A", "\U0001F34B", "\U0001F34C",
+                "\U0001F34D",
+                "\U0001F96D", "\U0001F34E", "\U0001F34F", "\U0001F350", "\U0001F351", "\U0001F352", "\U0001F353",
+                "\U0001F3F0",
+                "\U0001F55D", "\U0001F345", "\U0001F3D2", "\U0001F365", "\U0001F351", "\U0001F546", "\U0001F346",
+                "\U0001F554",
+                "\U0001F555", "\U0001F33D", "\U0001F336", "\U0001F3D1", "\U0001F352", "\U0001F36C", "\U0001F366",
+                "\U0001F3C4",
+                "\U0001F3C5", "\U0001F344", "\U0001F55C", "\U0001F3D1", "\U0001F550", "\U0001F556", "\U0001F3D3",
+                "\U0001F368",
+                "\U0001F36F", "\U0001F55E", "\U0001F356", "\U0001F357", "\U0001F369", "\U0001F353", "\U0001F354",
+                "\U0001F32D",
+                "\U0001F36A", "\U0001F32E", "\U0001F32F", "\U0001F3D4", "\U0001F359", "\U0001F3C6", "\U0001F35A",
+                "\U0001F573",
+                "\U0001F358", "\U0001F372", "\U0001F3D5", "\U0001F363", "\U0001F357", "\U0001F37F", "\U0001F36B",
+                "\U0001F371",
+                "\U0001F358", "\U0001F359", "\U0001F35A"]
+
+            combined_list = converted_d + converted_e + converted_f
+            random_selection = random.sample(combined_list, 6)
+            txn = self.domain_contract.functions.mintNative(random_selection, 1, self.account.address,
+                                                            "https://beranames.com/api/metadata/69",
+                                                            self.account.address).build_transaction(
+                {
+                    'gas': 800000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce(),
+                    'value': int(608610 * 10 ** 9)
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'mint成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'mint失败,{transaction_receipt.status}')
+                return False
         except Exception as e:
             print(e)
             return False

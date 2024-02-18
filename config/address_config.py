@@ -27,3 +27,4 @@ vdhoney_address = w3.to_checksum_address('0x7f8E75356015fECfafF66e2B34F181A093Dc
 aweth_address = w3.to_checksum_address('0xa9277257eA552b2673FB02EF36F070733bB01188')
 nft_address = w3.to_checksum_address('0xDc094eaC7CC01224E798F34543a8F9e9D2559479')
 nft2_address = w3.to_checksum_address('0xAd8fD889c77Ba37cECc0A4148C6917a4582c15DB')
+domain_address = w3.to_checksum_address('0x8D20B92B4163140F413AA52A4106fF9490bf2122')
