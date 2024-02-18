@@ -7,6 +7,7 @@ from loguru import logger
 
 from bera_tools import BeraChainTools
 from utils.bend_interaction_utils import bend_interacte
+from utils.bera_name_utils import mint_bera_name
 from utils.bex_interaction_utils import bex_interacte
 from utils.deploy_contract import deploy_contract
 from utils.honetjar_nft_mint import nft_mint
@@ -127,3 +128,4 @@ if __name__ == '__main__':
         args2.append([index, item[0], item[1], item[2], item[3], item[4]])
     for args in args2:
         claim_and_action(args)
+        print('\n\n')

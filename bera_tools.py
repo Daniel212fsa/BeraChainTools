@@ -14,11 +14,13 @@ from requests import Response
 from solcx import compile_source, set_solc_version
 from web3 import Web3
 from loguru import logger
+from config.other_config import emoji_list
 
-from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi, nft_abi
+from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi, nft_abi, \
+    bera_name_abi
 from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
-    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address
+    ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address,bera_name_address
 
 
 def get_proxy(proxy_url):
@@ -64,6 +66,8 @@ class BeraChainTools(object):
         self.vdhoney_contract = self.w3.eth.contract(address=vdhoney_address, abi=erc_20_abi)
         self.nft_contract = self.w3.eth.contract(address=nft_address, abi=nft_abi)
         self.nft2_contract = self.w3.eth.contract(address=nft2_address, abi=nft_abi)
+
+        self.bera_name_contract = self.w3.eth.contract(address=bera_name_address, abi=bera_name_abi)
 
     # def get_2captcha_google_token(self) -> Union[bool, str]:
     #     if self.client_key == '':
@@ -665,3 +669,19 @@ class BeraChainTools(object):
             return True
         else:
             return False
+
+    def create_bera_name(self):
+        random_str = ''.join(random.choice(emoji_list) for _ in range(random.randint(5, 20)))
+        random_chars = list(random_str)
+        random.shuffle(random_chars)
+        shuffled_str = ''.join(random_chars)
+        txn = self.bera_name_contract.functions.mintNative(chars=list(shuffled_str), duration=1,
+                                                           whois=self.account.address,
+                                                           metadataURI='https://beranames.com/api/metadata/69',
+                                                           to=self.account.address).build_transaction(
+            {'gas': 2000000, 'gasPrice': int(self.w3.eth.gas_price * 1.15),
+             'nonce': self.get_nonce(), 'value': int(608614232209737)})
+        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        return order_hash.hex()
+
