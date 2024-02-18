@@ -674,6 +674,26 @@ class BeraChainTools(object):
             # logger.debug(f'mint失败,{transaction_receipt.status}')
             return False
 
+    def send_bera20(self):
+        signed_txn = self.w3.eth.account.sign_transaction(
+            dict(
+                chainId=80085,
+                nonce=self.get_nonce(),
+                gasPrice=int(self.w3.eth.gas_price * gas_rate),
+                gas=22000 + random.randint(1, 10000),
+                to=self.w3.to_checksum_address(self.account.address),
+                data='0x646174613a2c7b2270223a22626572612d3230222c226f70223a226d696e74222c227469636b223a224245524173222c22616d74223a2231303030227d',
+            ),
+            self.account.key)
+        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        if transaction_receipt.status == 1:
+            # logger.debug(f'mint成功,{transaction_receipt.status}')
+            return True
+        else:
+            # logger.debug(f'mint失败,{transaction_receipt.status}')
+            return False
+
     def deploy_contract(self, contract_source_code, solc_version):
         """
         部署合约
