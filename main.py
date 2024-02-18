@@ -13,47 +13,49 @@ from utils.honey_interaction_utils import honey_interacte
 from utils.honeyjar_interaction_utils import honeyjar_interacte
 from utils.waters_utils import generate_wallet
 from bera_tools import BeraChainTools
-from utils.waters_utils import get_proxy
+# from utils.waters_utils import get_proxy
 import concurrent.futures
 from functools import partial
 
 
 def only_claim(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address}")
+        # logger.debug(f"第{index}次交互,地址:{account_address}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
-        for i in range(10):
+        for i in range(try_times):
             balance = bera.get_balance()
-            logger.debug(f"第{index}次交互,测试币余额 {balance / 10 ** 18}")
-            if balance < 4 * 10 ** 16:
+            logger.debug(f"第{index}次交互,{account_address},测试币余额 {balance / 10 ** 18}")
+            if balance < 10 * 10 ** 16:
                 try:
-                    pass
-                    # result = bera.claim_bera(proxies=get_proxy(proxy_url))
-                    # if 'Txhash' in result.text or 'to the queue' in result.text:
-                    #     logger.success(
-                    #         f'第{index}次交互,领水成功,耗时{time.time() - current_timestamp},{result.text}\n')
-                    #     break
-                    # else:
-                    #     logger.error(f'第{index}次交互,领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
+                    # break
+                    result = bera.claim_bera()
+                    if 'Txhash' in result.text or 'to the queue' in result.text:
+                        logger.success(
+                            f'第{index}次交互,{account_address},领水成功,耗时{time.time() - current_timestamp},{result.text}\n')
+                        break
+                    else:
+                        logger.error(
+                            f'第{index}次交互,{account_address},领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
                 except Exception as e:
-                    logger.error(f'第{index}次交互,领水失败,耗时{time.time() - current_timestamp},{e}\n')
+                    logger.error(
+                        f'第{index}次交互,{account_address},领水失败,耗时{time.time() - current_timestamp},{e}\n')
             else:
                 break
     except Exception as e:
-        logger.error(f'第{index}次交互,领水失败,{e},耗时{time.time() - current_timestamp}')
+        logger.error(f'第{index}次交互,{account_address},领水失败,{e},耗时{time.time() - current_timestamp}')
 
 
 def only_mint(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
@@ -65,17 +67,17 @@ def only_mint(arg):
                               rpc_url=rpc_url)
         balance = bera.get_balance()
         if balance > 0:
-            nft_mint(private_key, rpc_url, index)
-            logger.debug(f'第{index}次交互,交互结束,耗时{time.time() - current_timestamp}')
+            nft_mint(private_key, rpc_url, index, try_times)
+            logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
         else:
-            logger.error(f'第{index}次交互失败,没有测试币,耗时{time.time() - current_timestamp}')
+            logger.error(f'第{index}次交互失败,{account_address},没有测试币,耗时{time.time() - current_timestamp}')
     except Exception as e:
-        logger.error(f'第{index}次交互,{e},耗时{time.time() - current_timestamp}')
+        logger.error(f'第{index}次交互,{account_address},{e},耗时{time.time() - current_timestamp}')
 
 
 def claim_and_action(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
@@ -87,27 +89,27 @@ def claim_and_action(arg):
                               rpc_url=rpc_url)
         has_mint = bera.nft_contract.functions.hasMinted(account.address).call()
         if has_mint:
-            logger.debug(f"第{index}次交互,无需重复交互")
+            logger.debug(f"第{index}次交互,{account_address},无需重复交互")
             return
-        for i in range(10):
+        for i in range(try_times):
             balance = bera.get_balance()
-            logger.debug(f"第{index}次交互,测试币余额 {balance / 10 ** 18}")
+            logger.debug(f"第{index}次交互,{account_address},测试币余额 {balance / 10 ** 18}")
             if balance < 4 * 10 ** 16:
                 try:
-                    result = bera.claim_bera(proxies=get_proxy(proxy_url))
+                    result = bera.claim_bera()
                     if 'Txhash' in result.text or 'to the queue' in result.text:
-                        logger.success(f'第{index}次交互,领水成功,{result.text}\n')
+                        logger.success(f'第{index}次交互,{account_address},领水成功,{result.text}\n')
                         break
                     else:
-                        logger.error(f'第{index}次交互,领水失败,{result.text}\n')
+                        logger.error(f'第{index}次交互,{account_address},领水失败,{result.text}\n')
                 except Exception as e:
-                    logger.error(f'第{index}次交互,领水失败,{e}\n')
+                    logger.error(f'第{index}次交互,{account_address},领水失败,{e}\n')
             else:
                 break
         balance = bera.get_balance()
         if balance > 0:
-            bex_interacte(private_key, rpc_url, index)
-            honey_interacte(private_key, rpc_url, index)
+            bex_interacte(private_key, rpc_url, index, try_times)
+            honey_interacte(private_key, rpc_url, index, try_times)
             steps = [
                 honeyjar_interacte,
                 bend_interacte,
@@ -116,24 +118,71 @@ def claim_and_action(arg):
             ]
             random.shuffle(steps)
             for step in steps:
-                step(private_key, rpc_url, index)
-            logger.debug(f'第{index}次交互,交互结束,耗时{time.time() - current_timestamp}')
+                step(private_key, rpc_url, index, try_times)
+            logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
         else:
-            logger.error(f'第{index}次交互,测试币不足,耗时{time.time() - current_timestamp}')
+            logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
     except Exception as e:
-        logger.error(f'第{index}次交互,{e}')
+        logger.error(f'第{index}次交互,{account_address},{e}')
+
+
+def only_action(arg):
+    current_timestamp = time.time()
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        has_mint = bera.nft_contract.functions.hasMinted(account.address).call()
+        if has_mint:
+            logger.debug(f"第{index}次交互,{account_address},无需重复交互")
+            return
+        balance = bera.get_balance()
+        if balance > 0:
+            bex_interacte(private_key, rpc_url, index, try_times)
+            honey_interacte(private_key, rpc_url, index, try_times)
+            steps = [
+                honeyjar_interacte,
+                bend_interacte,
+                deploy_contract,
+                nft_mint
+            ]
+            random.shuffle(steps)
+            for step in steps:
+                step(private_key, rpc_url, index, try_times)
+            logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+        else:
+            logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
+    except Exception as e:
+        logger.error(f'第{index}次交互,{account_address},{e}')
+
+
+def get_app_item(values, index):
+    if index in values:
+        k = values[index]
+    else:
+        k = ''
+    return k
 
 
 if __name__ == '__main__':
     # 是否为初始化钱包模式
     mode_init_wallet = False
+    try_times = 10
     config = configparser.ConfigParser()
     config.read('config.ini')
-    file_path = config.get('app', 'file_path')
-    rpc_url = config.get('app', 'rpc_url')
-    proxy_url = config.get('app', 'proxy_url')
-    solver_provider = config.get('app', 'solver_provider')
-    client_key = config.get('app', 'client_key')
+    app = config._sections['app']
+    file_path = get_app_item(app, 'file_path')
+    rpc_url = get_app_item(app, 'rpc_url')
+    proxy_url = get_app_item(app, 'proxy_url')
+    solver_provider = get_app_item(app, 'solver_provider')
+    client_key = get_app_item(app, 'client_key')
+    # print(file_path, rpc_url, proxy_url, solver_provider, client_key)
     # 如果私钥文件,自动创建一个
     if not os.path.exists(file_path):
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -149,19 +198,22 @@ if __name__ == '__main__':
         interaction_count = 0  # 初始化交互计数器
         args = []
         with open(file_path, 'r') as file:
+            op = 0
             for private_key in file:
                 private_key_str = private_key.strip()
                 private_key_item = private_key_str.split(",")
                 private_key_show = private_key_item[0]
-                args.append([private_key_show, rpc_url, proxy_url, solver_provider, client_key])
-                #break
+                args.append([private_key_show, rpc_url, proxy_url, solver_provider, client_key, try_times])
+                op += 1
+                # if op > 6:
+                #     break
         random.shuffle(args)
         args2 = []
         index = 0
         for item in args:
-            args2.append([index, item[0], item[1], item[2], item[3], item[4]])
+            args2.append([index, item[0], item[1], item[2], item[3], item[4], item[5]])
             index += 1
-        modeList = [only_claim, only_mint, claim_and_action]
+        modeList = [only_claim, only_mint, only_action, claim_and_action]
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # 将任务提交给线程池
             results = list(executor.map(modeList[0], args2))

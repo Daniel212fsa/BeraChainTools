@@ -9,8 +9,8 @@ from solcx import install_solc
 from bera_tools import BeraChainTools
 
 
-def deploy_contract(private_key, rpc_url, index):
-    for _ in range(10):
+def deploy_contract(private_key, rpc_url, index, try_times):
+    for _ in range(try_times):
         if deploy_contract_(private_key, rpc_url, index):
             break
 

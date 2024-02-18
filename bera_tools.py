@@ -6,29 +6,59 @@ import json
 import random
 import time
 from typing import Union
+import configparser
 import requests
 from eth_account import Account
 from eth_typing import Address, ChecksumAddress
 from faker import Faker
 from requests import Response
-from solcx import compile_source, set_solc_version
+from solcx import compile_source, set_solc_version, compile_standard
 from web3 import Web3
 from loguru import logger
 
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from config.abi_config import erc_20_abi, honey_abi, bex_abi, bend_abi, bend_borrows_abi, ooga_booga_abi, nft_abi
 from config.address_config import bex_swap_address, usdc_address, honey_address, honey_swap_address, \
     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
     ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address
 
+gas_rate = 1.05
 
-def get_proxy(proxy_url):
-    aaa = requests.get(proxy_url).text
-    proxy_host = aaa.splitlines()[0]
-    logger.debug('代理IP为：' + proxy_host)
-    proxy = {
-        'http': 'http://' + proxy_host,
-        'https': 'http://' + proxy_host
-    }
+
+def get_app_item(values, index):
+    if index in values:
+        k = values[index]
+    else:
+        k = ''
+    return k
+
+
+def get_proxy():
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    app = config._sections['app']
+    file_path = get_app_item(app, 'file_path')
+    rpc_url = get_app_item(app, 'rpc_url')
+    proxy_url = get_app_item(app, 'proxy_url')
+    solver_provider = get_app_item(app, 'solver_provider')
+    client_key = get_app_item(app, 'client_key')
+    proxy_mode = get_app_item(app, 'proxy_mode')
+    proxy_list = get_app_item(app, 'proxy_list')
+    if proxy_mode == 'smart':
+        proxy = {
+            'http': proxy_list,
+            'https': proxy_list
+        }
+    else:
+        aaa = requests.get(proxy_url, verify=False).text
+        proxy_host = aaa.splitlines()[0]
+        proxy = {
+            'http': 'http://' + proxy_host,
+            'https': 'http://' + proxy_host
+        }
+    # logger.debug(f'代理IP为:{proxy}')
     return proxy
 
 
@@ -106,13 +136,14 @@ class BeraChainTools(object):
             "pageurl": "https://artio.faucet.berachain.com/",
             "json": 1
         }
-        response = requests.get(f'https://2captcha.com/in.php?', params=params).json()
+        response = requests.get(f'https://2captcha.com/in.php?', params=params, verify=False).json()
         if response['status'] != 1:
             raise ValueError(response)
         task_id = response['request']
         for _ in range(60):
             response = requests.get(
-                f'https://2captcha.com/res.php?key={self.client_key}&action=get&id={task_id}&json=1').json()
+                f'https://2captcha.com/res.php?key={self.client_key}&action=get&id={task_id}&json=1',
+                verify=False).json()
             if response['status'] == 1:
                 return response['request']
             else:
@@ -126,14 +157,14 @@ class BeraChainTools(object):
                      "task": {"websiteURL": "https://artio.faucet.berachain.com/",
                               "websiteKey": "6LfOA04pAAAAAL9ttkwIz40hC63_7IsaU2MgcwVH",
                               "type": "RecaptchaV3TaskProxylessM1S7", "pageAction": "submit"}, "softID": 109}
-        response = self.session.post(url='https://api.yescaptcha.com/createTask', json=json_data).json()
+        response = self.session.post(url='https://api.yescaptcha.com/createTask', json=json_data, verify=False).json()
         if response['errorId'] != 0:
             raise ValueError(response)
         task_id = response['taskId']
         time.sleep(5)
         for _ in range(30):
             data = {"clientKey": self.client_key, "taskId": task_id}
-            response = requests.post(url='https://api.yescaptcha.com/getTaskResult', json=data).json()
+            response = requests.post(url='https://api.yescaptcha.com/getTaskResult', json=data, verify=False).json()
             if response['status'] == 'ready':
                 return response['solution']['gRecaptchaResponse']
             else:
@@ -170,14 +201,14 @@ class BeraChainTools(object):
             "task": {"websiteURL": "https://artio.faucet.berachain.com/",
                      "websiteKey": "6LfOA04pAAAAAL9ttkwIz40hC63_7IsaU2MgcwVH",
                      "type": "ReCaptchaV3TaskProxyless", }, 'appId': '34119'}
-        response = self.session.post(url='https://api.ez-captcha.com/createTask', json=json_data).json()
+        response = self.session.post(url='https://api.ez-captcha.com/createTask', json=json_data, verify=False).json()
         if response['errorId'] != 0:
             raise ValueError(response)
         task_id = response['taskId']
         time.sleep(5)
         for _ in range(30):
             data = {"clientKey": self.client_key, "taskId": task_id}
-            response = requests.post(url='https://api.ez-captcha.com/getTaskResult', json=data).json()
+            response = requests.post(url='https://api.ez-captcha.com/getTaskResult', json=data, verify=False).json()
             if response['status'] == 'ready':
                 return response['solution']['gRecaptchaResponse']
             else:
@@ -243,6 +274,7 @@ class BeraChainTools(object):
             'user-agent': user_agent
         }
         params = {'address': self.account.address}
+        proxies = get_proxy()
         for i in range(10):
             try:
                 response = requests.post(url,
@@ -250,13 +282,14 @@ class BeraChainTools(object):
                                          headers=headers,
                                          data=json.dumps(params),
                                          proxies=proxies,
-                                         timeout=30
+                                         timeout=30,
+                                         verify=False
                                          )
-                logger.debug(f'第{i}次使用代理{proxies["http"]},返回结果,{response.text}')
+                # logger.debug(f'第{i}次使用代理{proxies["http"]},返回结果,{response.text}')
                 return response
             except Exception as e:
                 logger.debug(f'第{i}次使用代理{proxies["http"]},错误代码,{e}')
-                proxies = get_proxy(self.proxy_url)
+                proxies = get_proxy()
 
     def approve_token(self, spender: Union[Address, ChecksumAddress], amount: int,
                       approve_token_address: Union[Address, ChecksumAddress]) -> bool:
@@ -302,7 +335,7 @@ class BeraChainTools(object):
         txn = approve_contract.functions.approve(spender, approve_amount).build_transaction(
             {
                 'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -402,7 +435,7 @@ class BeraChainTools(object):
             {
                 'gas': 500000 + random.randint(1, 10000),
                 'value': amount_in if asset_in_address == wbear_address else 0,
-                'gasPrice': int(self.w3.eth.gas_price * 1.2),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -433,7 +466,7 @@ class BeraChainTools(object):
                                                        amountsIn=[amount_in]).build_transaction(
             {
                 'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -459,7 +492,7 @@ class BeraChainTools(object):
                                                       amount=amount_usdc_in, ).build_transaction(
             {
                 'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -485,7 +518,7 @@ class BeraChainTools(object):
                                                         collateral=usdc_address).build_transaction(
             {
                 'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -513,7 +546,7 @@ class BeraChainTools(object):
                                                   onBehalfOf=self.account.address, referralCode=0).build_transaction(
             {
                 'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -539,7 +572,7 @@ class BeraChainTools(object):
                                                   onBehalfOf=self.account.address).build_transaction(
             {
                 'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -562,7 +595,8 @@ class BeraChainTools(object):
         txn = self.bend_contract.functions.repay(asset=asset_token_address, amount=repay_amount,
                                                  interestRateMode=2, onBehalfOf=self.account.address).build_transaction(
             {
-                'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gas': 500000 + random.randint(1, 10000),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -583,7 +617,7 @@ class BeraChainTools(object):
             dict(
                 chainId=80085,
                 nonce=self.get_nonce(),
-                gasPrice=int(self.w3.eth.gas_price * 1.15),
+                gasPrice=int(self.w3.eth.gas_price * gas_rate),
                 gas=134500 + random.randint(1, 10000),
                 to=self.w3.to_checksum_address(ooga_booga_address),
                 data='0xa6f2ae3a',
@@ -605,7 +639,8 @@ class BeraChainTools(object):
             return True
         txn = self.nft_contract.functions.buy().build_transaction(
             {
-                'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gas': 500000 + random.randint(1, 10000),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -625,7 +660,8 @@ class BeraChainTools(object):
             return True
         txn = self.nft2_contract.functions.buy().build_transaction(
             {
-                'gas': 500000 + random.randint(1, 10000), 'gasPrice': int(self.w3.eth.gas_price * 1.15),
+                'gas': 500000 + random.randint(1, 10000),
+                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                 'nonce': self.get_nonce()
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -650,14 +686,21 @@ class BeraChainTools(object):
         """
         ""
         set_solc_version(solc_version)
-        compiled_sol = compile_source(contract_source_code)
+        compiled_sol = compile_source(contract_source_code, optimize=True)
         contract_id, contract_interface = compiled_sol.popitem()
+        gas_estimate = self.w3.eth.estimate_gas({'data': contract_interface['bin']})
+        print(gas_estimate)
+        gasPrice = int(self.w3.eth.gas_price * gas_rate)
+        gasLimit = 180000
+        gas = gasPrice * gasLimit
+        print("预估gas", gas / 10 ** 18)
         txn = dict(
             chainId=80085,
-            gas=2000000,
-            gasPrice=int(self.w3.eth.gas_price * 1.15),
+            gas=gasLimit,
+            gasPrice=gasPrice,
             nonce=self.get_nonce(),
-            data=contract_interface['bin'])
+            data=contract_interface['bin']
+        )
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
