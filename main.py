@@ -125,4 +125,5 @@ if __name__ == '__main__':
     for item in args:
         index += 1
         args2.append([index, item[0], item[1], item[2], item[3], item[4]])
-    claim_and_action(args2[0])
+    for args in args2:
+        claim_and_action(args)
