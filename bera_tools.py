@@ -759,7 +759,7 @@ class BeraChainTools(object):
                 "\U0001F358", "\U0001F359", "\U0001F35A"]
 
             combined_list = converted_d + converted_e + converted_f
-            domain_len_list = [6, 7, 8]
+            domain_len_list = [5, 6, 7, 8]
             domain_len = random.choice(domain_len_list)
             random_selection = random.sample(combined_list, domain_len)
             txn = self.domain_contract.functions.mintNative(random_selection, 1, self.account.address,
