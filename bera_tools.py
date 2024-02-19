@@ -759,7 +759,9 @@ class BeraChainTools(object):
                 "\U0001F358", "\U0001F359", "\U0001F35A"]
 
             combined_list = converted_d + converted_e + converted_f
-            random_selection = random.sample(combined_list, 6)
+            domain_len_list = [6, 7, 8]
+            domain_len = random.choice(domain_len_list)
+            random_selection = random.sample(combined_list, domain_len)
             txn = self.domain_contract.functions.mintNative(random_selection, 1, self.account.address,
                                                             "https://beranames.com/api/metadata/69",
                                                             self.account.address).build_transaction(
@@ -771,13 +773,14 @@ class BeraChainTools(object):
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
-            if transaction_receipt.status == 1:
-                # logger.debug(f'mint成功,{transaction_receipt.status}')
-                return True
-            else:
-                # logger.debug(f'mint失败,{transaction_receipt.status}')
-                return False
+            return True
+            # transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash, timeout=30)
+            # if transaction_receipt.status == 1:
+            #     # logger.debug(f'mint成功,{transaction_receipt.status}')
+            #     return True
+            # else:
+            #     # logger.debug(f'mint失败,{transaction_receipt.status}')
+            #     return False
         except Exception as e:
             print(e)
             return False
