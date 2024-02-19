@@ -247,10 +247,8 @@ def get_app_item(values, index):
     return k
 
 
-if __name__ == '__main__':
-    # 是否为初始化钱包模式
-    mode_init_wallet = False
-    try_times = 10
+def main(try_times, max_workers, mode_index):
+    # try_times = 10
     config = configparser.ConfigParser()
     config.read('config.ini')
     app = config._sections['app']
@@ -262,45 +260,50 @@ if __name__ == '__main__':
     rpc_list = get_app_item(app, 'rpc_list')
     # print(file_path, rpc_url, proxy_url, solver_provider, client_key)
     # 如果私钥文件,自动创建一个
-    if not os.path.exists(file_path):
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w') as file:
-            file.write('')
-    if mode_init_wallet:
-        # 预期领水的地址数
-        count = 1800
-        # 线程数
-        max_workers = 5
-        generate_wallet(count, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key, file_path,
-                        max_workers)
-    else:
-        interaction_count = 0  # 初始化交互计数器
-        args = []
-        with open(file_path, 'r') as file:
-            op = 0
-            for private_key in file:
-                private_key_str = private_key.strip()
-                private_key_item = private_key_str.split(",")
-                private_key_show = private_key_item[0]
-                args.append([private_key_show, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key,
-                             try_times])
-                op += 1
-                # break
-        random.shuffle(args)
-        args2 = []
-        index = 0
-        for item in args:
-            args2.append([index, item[0], item[1], item[2], item[3], item[4], item[5]])
-            index += 1
-        modeList = [
-            only_claim,  # 0
-            only_mint,  # 1
-            only_action,  # 2
-            claim_and_action,  # 3
-            only_send20,  # 4
-            only_create_domain_nft,  # 5
-            only_dex,  # 6
-        ]
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            # 将任务提交给线程池
-            results = list(executor.map(modeList[5], args2))
+    # if not os.path.exists(file_path):
+    #     os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    #     with open(file_path, 'w') as file:
+    #         file.write('')
+    # if mode_init_wallet:
+    #     # 预期领水的地址数
+    #     count = 1800
+    #     # 线程数
+    #     max_workers = 5
+    #     generate_wallet(count, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key, file_path,
+    #                     max_workers)
+    # else:
+    interaction_count = 0  # 初始化交互计数器
+    args = []
+    with open(file_path, 'r') as file:
+        op = 0
+        for private_key in file:
+            private_key_str = private_key.strip()
+            private_key_item = private_key_str.split(",")
+            private_key_show = private_key_item[0]
+            args.append([private_key_show, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key,
+                         try_times])
+            op += 1
+            # break
+    random.shuffle(args)
+    args2 = []
+    index = 0
+    for item in args:
+        args2.append([index, item[0], item[1], item[2], item[3], item[4], item[5]])
+        index += 1
+    modeList = [
+        only_claim,  # 0
+        only_mint,  # 1
+        only_action,  # 2
+        claim_and_action,  # 3
+        only_send20,  # 4
+        only_create_domain_nft,  # 5
+        only_dex,  # 6
+    ]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # 将任务提交给线程池
+        results = list(executor.map(modeList[mode_index], args2))
+
+
+if __name__ == '__main__':
+    for i in range(3):
+        main(10, 12, 5)

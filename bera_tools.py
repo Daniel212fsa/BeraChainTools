@@ -759,28 +759,33 @@ class BeraChainTools(object):
                 "\U0001F358", "\U0001F359", "\U0001F35A"]
 
             combined_list = converted_d + converted_e + converted_f
+            # 注意去重
+            combined_list = list(set(combined_list))
             domain_len_list = [5, 6, 7, 8]
             domain_len = random.choice(domain_len_list)
             random_selection = random.sample(combined_list, domain_len)
+            gas = int(self.w3.eth.gas_price * gas_rate)
+            # if gas < 10 ** 8:
+            #     gas = 10 ** 8
             txn = self.domain_contract.functions.mintNative(random_selection, 1, self.account.address,
                                                             "https://beranames.com/api/metadata/69",
                                                             self.account.address).build_transaction(
                 {
                     'gas': 800000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': gas,
                     'nonce': self.get_nonce(),
                     'value': int(608610 * 10 ** 9)
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             return True
-            # transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash, timeout=30)
-            # if transaction_receipt.status == 1:
-            #     # logger.debug(f'mint成功,{transaction_receipt.status}')
-            #     return True
-            # else:
-            #     # logger.debug(f'mint失败,{transaction_receipt.status}')
-            #     return False
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash, timeout=30)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'mint成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'mint失败,{transaction_receipt.status}')
+                return False
         except Exception as e:
             print(e)
             return False
