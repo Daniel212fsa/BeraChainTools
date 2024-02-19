@@ -55,7 +55,7 @@ def only_create_domain_nft(arg):
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f'第{index}次交互,{account_address},{name},rpc:{rpc_url}')
+        logger.debug(f'第{index}次交互,{account_address},{name},rpc: {rpc_url}')
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -186,7 +186,7 @@ def only_dex(arg):
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address}")
+        logger.debug(f"第{index}次交互,地址:{account_address},rpc: {rpc_url}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -306,4 +306,4 @@ def main(try_times, max_workers, mode_index):
 
 if __name__ == '__main__':
     for i in range(3):
-        main(10, 12, 5)
+        main(2, 12, 6)

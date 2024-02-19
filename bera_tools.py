@@ -26,6 +26,7 @@ from config.address_config import bex_swap_address, usdc_address, honey_address,
     ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address, domain_address
 
 gas_rate = 1.05
+wait_time_out = 60
 
 
 def get_app_item(values, index):
@@ -96,6 +97,7 @@ class BeraChainTools(object):
         self.nft_contract = self.w3.eth.contract(address=nft_address, abi=nft_abi)
         self.nft2_contract = self.w3.eth.contract(address=nft2_address, abi=nft_abi)
         self.domain_contract = self.w3.eth.contract(address=domain_address, abi=domain_abi)
+        # print(self.rpc_url)
 
     # def get_2captcha_google_token(self) -> Union[bool, str]:
     #     if self.client_key == '':
@@ -314,7 +316,7 @@ class BeraChainTools(object):
         #         ),
         #         self.account.key)
         #     order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        #     transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        #     transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         #     if transaction_receipt.status == 1:
         #         # logger.debug(f'授权成功,{transaction_receipt.status}')
         #         return True
@@ -342,7 +344,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             # logger.debug(f'授权成功,{transaction_receipt.status}')
             return True
@@ -443,7 +445,7 @@ class BeraChainTools(object):
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
         # 等待交易收据
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             # logger.debug(f'交换成功,{transaction_receipt.status}')
             return True
@@ -473,7 +475,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             # logger.debug(f'bex 增加流动性成功,{transaction_receipt.status}')
             return True
@@ -499,7 +501,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             return True
         else:
@@ -525,7 +527,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             return True
         else:
@@ -553,7 +555,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             return True
         else:
@@ -579,7 +581,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             return True
         else:
@@ -603,14 +605,14 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             return True
         else:
             return False
 
     def honey_jar_mint(self):
-        honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
+        # honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
         has_mint = self.ooga_booga_contract.functions.hasMinted(self.account.address).call()
         if has_mint:
             # logger.debug(f'已mint！')
@@ -626,7 +628,7 @@ class BeraChainTools(object):
             ),
             self.account.key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             # logger.debug(f'mint成功,{transaction_receipt.status}')
             return True
@@ -647,7 +649,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             # logger.debug(f'mint成功,{transaction_receipt.status}')
             return True
@@ -668,7 +670,7 @@ class BeraChainTools(object):
             })
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             # logger.debug(f'mint成功,{transaction_receipt.status}')
             return True
@@ -690,7 +692,7 @@ class BeraChainTools(object):
                 self.account.key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             return True
-            # transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+            # transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
             # if transaction_receipt.status == 1:
             #     # logger.debug(f'mint成功,{transaction_receipt.status}')
             #     return True
@@ -779,7 +781,7 @@ class BeraChainTools(object):
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             return True
-            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash, timeout=30)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash, timeout=wait_time_out)
             if transaction_receipt.status == 1:
                 # logger.debug(f'mint成功,{transaction_receipt.status}')
                 return True
@@ -819,7 +821,7 @@ class BeraChainTools(object):
         )
         signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
         order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash)
+        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
         if transaction_receipt.status == 1:
             return True
         else:
