@@ -288,7 +288,7 @@ def get_app_item(values, index):
     return k
 
 
-def main(try_times, max_workers, mode_index):
+def main(try_times, max_workers, mode_index, test_private_key_show):
     # try_times = 10
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -306,10 +306,13 @@ def main(try_times, max_workers, mode_index):
             private_key_str = private_key.strip()
             private_key_item = private_key_str.split(",")
             private_key_show = private_key_item[0]
+            if len(test_private_key_show) > 0:
+                private_key_show = test_private_key_show
             args.append([private_key_show, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key,
                          try_times])
             op += 1
-            # break
+            if len(test_private_key_show) > 0:
+                break
     random.shuffle(args)
     args2 = []
     index = 0
@@ -337,13 +340,14 @@ def main(try_times, max_workers, mode_index):
 if __name__ == '__main__':
     only_claim_mode = False  # 只批量领水
     only_action_mode = True  # 只批量交互
+    test_private_key_show = ''  # 测试私钥
     for i in range(3):
         if only_claim_mode and not only_action_mode:
-            main(5, 5, 0)  # 领水
+            main(5, 5, 0, test_private_key_show)  # 领水
             break
-        # main(5, 5, 1)  # 只兑换
-        # main(5, 5, 2)  # 只交换Hoeny和USDC
-        # main(5, 5, 3)  # 只mintNFT,要有足够的Honey
-        # main(5, 5, 8)  # 只发送铭文/只交互域名/只部署合约/只借贷
-
-        main(5, 10, 9)
+        # main(5, 5, 1, test_private_key_show)  # 只兑换
+        # main(5, 5, 2, test_private_key_show)  # 只交换Hoeny和USDC
+        # main(5, 5, 3, test_private_key_show)  # 只mintNFT,要有足够的Honey
+        # main(5, 5, 8, test_private_key_show)  # 只发送铭文/只交互域名/只部署合约/只借贷
+        #
+        main(5, 15, 9, test_private_key_show)

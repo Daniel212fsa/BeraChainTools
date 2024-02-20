@@ -221,7 +221,7 @@ class BeraChainTools(object):
 
     def get_nonce(self):
         noncelist = []
-        for i in range(5):
+        for i in range(10):
             nonce = self.w3.eth.get_transaction_count(self.account.address)
             noncelist.append(nonce)
         return max(noncelist)
@@ -691,14 +691,14 @@ class BeraChainTools(object):
                 ),
                 self.account.key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-            return True
-            # transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-            # if transaction_receipt.status == 1:
-            #     # logger.debug(f'mint成功,{transaction_receipt.status}')
-            #     return True
-            # else:
-            #     # logger.debug(f'mint失败,{transaction_receipt.status}')
-            #     return False
+            # return True
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'mint成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'mint失败,{transaction_receipt.status}')
+                return False
         except Exception as e:
             print(e)
             return False
@@ -780,7 +780,7 @@ class BeraChainTools(object):
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-            return True
+            # return True
             transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash, timeout=wait_time_out)
             if transaction_receipt.status == 1:
                 # logger.debug(f'mint成功,{transaction_receipt.status}')
