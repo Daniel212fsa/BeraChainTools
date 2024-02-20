@@ -352,7 +352,7 @@ if __name__ == '__main__':
     only_claim_mode = False  # 只批量领水
     only_action_mode = True  # 只批量交互
     test_private_key_show = ''  # 测试私钥
-    for i in range(1):
+    for i in range(2):
         if only_claim_mode and not only_action_mode:
             main(5, 5, 0, test_private_key_show)  # 领水
             break
