@@ -55,15 +55,15 @@ def nft_mint_(private_key, rpc_url, index, try_times, bera, nft_contract, nft_co
     account_address = account.address
     try:
         logger.debug(f'第{index}次交互:{account_address},{name} mint 交互开始')
-        has_mint = nft_contract.functions.hasMinted(account.address).call()
-        if has_mint:
-            logger.success(f'第{index}次交互:{account_address},之前mint过了{nft_contract_address},{name} mint 交互成功')
-            logger.debug('-------------------------------------------------------------------------------------')
-            return True
-        usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
-        honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
-        logger.debug(
-            f'第{index}次交互:{account_address},usdc_balance:{usdc_balance / 10 ** 18},honey_balance:{honey_balance / 10 ** 18},价格：{price / 10 ** 18}')
+        # has_mint = nft_contract.functions.hasMinted(account.address).call()
+        # if has_mint:
+        #     logger.success(f'第{index}次交互:{account_address},之前mint过了{nft_contract_address},{name} mint 交互成功')
+        #     logger.debug('-------------------------------------------------------------------------------------')
+        #     return True
+        # usdc_balance = bera.usdc_contract.functions.balanceOf(account.address).call()
+        # honey_balance = bera.honey_contract.functions.balanceOf(account.address).call()
+        # logger.debug(
+        #     f'第{index}次交互:{account_address},usdc_balance:{usdc_balance / 10 ** 18},honey_balance:{honey_balance / 10 ** 18},价格：{price / 10 ** 18}')
         approve_result = bera.approve_token(nft_contract_address, 5 * 10 ** 18, honey_address)
         if approve_result:
             # if honey_balance < price:

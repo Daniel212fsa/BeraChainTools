@@ -259,23 +259,34 @@ def all_action(arg):
                               client_key=client_key,
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
-        balance = bera.get_balance()
-        if balance > 0:
-            bex_interacte(private_key, rpc_url, index, try_times)
-            honey_interacte(private_key, rpc_url, index, try_times)
-            nft_mint(private_key, rpc_url, index, try_times)
-            steps = [
-                send20,
-                create_domain_nft,
-                deploy_contract,
-                bend_interacte
-            ]
-            random.shuffle(steps)
-            for step in steps:
-                step(private_key, rpc_url, index, try_times)
-            logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+        gas_price = bera.get_gas_price()
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        app = config._sections['app']
+        max_gas_price = get_app_item(app, 'max_gas_price')
+        if max_gas_price == '':
+            max_gas_price = 10 ** 10
+        if gas_price < int(max_gas_price):
+            logger.debug(f'第{index}次交互,{account_address},当前gas: {gas_price / 10 ** 9}')
+            balance = bera.get_balance()
+            if balance > 0:
+                bex_interacte(private_key, rpc_url, index, try_times)
+                honey_interacte(private_key, rpc_url, index, try_times)
+                nft_mint(private_key, rpc_url, index, try_times)
+                steps = [
+                    send20,
+                    create_domain_nft,
+                    deploy_contract,
+                    bend_interacte
+                ]
+                random.shuffle(steps)
+                for step in steps:
+                    step(private_key, rpc_url, index, try_times)
+                logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+            else:
+                logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
         else:
-            logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
+            logger.error(f'第{index}次交互,{account_address},gasPrice过高,耗时{time.time() - current_timestamp}')
     except Exception as e:
         logger.error(f'第{index}次交互,{account_address},{e}')
 
@@ -341,7 +352,7 @@ if __name__ == '__main__':
     only_claim_mode = False  # 只批量领水
     only_action_mode = True  # 只批量交互
     test_private_key_show = ''  # 测试私钥
-    for i in range(3):
+    for i in range(1):
         if only_claim_mode and not only_action_mode:
             main(5, 5, 0, test_private_key_show)  # 领水
             break
@@ -351,3 +362,4 @@ if __name__ == '__main__':
         # main(5, 5, 8, test_private_key_show)  # 只发送铭文/只交互域名/只部署合约/只借贷
         #
         main(5, 15, 9, test_private_key_show)
+        # main(5, 15, 6, test_private_key_show)

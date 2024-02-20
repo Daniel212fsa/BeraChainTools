@@ -37,17 +37,19 @@ def get_app_item(values, index):
     return k
 
 
+config = configparser.ConfigParser()
+config.read('config.ini')
+app = config._sections['app']
+file_path = get_app_item(app, 'file_path')
+rpc_url = get_app_item(app, 'rpc_url')
+proxy_url = get_app_item(app, 'proxy_url')
+solver_provider = get_app_item(app, 'solver_provider')
+client_key = get_app_item(app, 'client_key')
+proxy_mode = get_app_item(app, 'proxy_mode')
+proxy_list = get_app_item(app, 'proxy_list')
+
+
 def get_proxy():
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    app = config._sections['app']
-    file_path = get_app_item(app, 'file_path')
-    rpc_url = get_app_item(app, 'rpc_url')
-    proxy_url = get_app_item(app, 'proxy_url')
-    solver_provider = get_app_item(app, 'solver_provider')
-    client_key = get_app_item(app, 'client_key')
-    proxy_mode = get_app_item(app, 'proxy_mode')
-    proxy_list = get_app_item(app, 'proxy_list')
     if proxy_mode == 'smart':
         proxy = {
             'http': proxy_list,
@@ -66,13 +68,15 @@ def get_proxy():
 
 class BeraChainTools(object):
     def __init__(self, private_key,
-                 proxy_url='',
-                 client_key='',
-                 solver_provider='',
+                 proxy_url=proxy_url,
+                 client_key=client_key,
+                 solver_provider=solver_provider,
                  rpc_url='https://artio.rpc.berachain.com/'
                  ):
-        if solver_provider not in ["yescaptcha", "2captcha", "ez-captcha", ""]:
-            raise ValueError("solver_provider must be 'yescaptcha' or '2captcha' or 'ez-captcha' ")
+        # if solver_provider is None:
+        #     print('None')
+        # if solver_provider not in ["yescaptcha", "2captcha", "ez-captcha", ""]:
+        #     raise ValueError("solver_provider must be 'yescaptcha' or '2captcha' or 'ez-captcha' ")
         self.solver_provider = solver_provider
         self.private_key = private_key
         self.client_key = client_key
@@ -219,6 +223,9 @@ class BeraChainTools(object):
                 time.sleep(2)
         return False
 
+    def get_gas_price(self):
+        return self.w3.eth.gas_price
+
     def get_nonce(self):
         noncelist = []
         for i in range(10):
@@ -239,12 +246,15 @@ class BeraChainTools(object):
             raise ValueError("solver_provider must be 'yescaptcha' or '2captcha' or 'ez-captcha' ")
         return provider_dict[self.solver_provider]()
 
+    # 处理错误消息
+
     def claim_bera(self, proxies=None) -> Response:
         """
         bera领水
         :param proxies: http代理
         :return: object
         """
+        # print('领水')
         google_token = self.get_solver_provider()
         if not google_token:
             raise ValueError('获取google token 出错')
@@ -295,6 +305,10 @@ class BeraChainTools(object):
                 logger.debug(f'第{i}次使用代理{proxies["http"]},错误代码,{e}')
                 proxies = get_proxy()
 
+    def deal_with_e_message(self, e):
+        if 'insufficient funds for gas' in str(e):
+            self.claim_bera()
+
     def approve_token(self, spender: Union[Address, ChecksumAddress], amount: int,
                       approve_token_address: Union[Address, ChecksumAddress]) -> bool:
         """
@@ -304,52 +318,35 @@ class BeraChainTools(object):
         :param approve_token_address: 需要授权的代币地址
         :return: hash
         """
-        # if spender == nft_address:
-        #     signed_txn = self.w3.eth.account.sign_transaction(
-        #         dict(
-        #             chainId=80085,
-        #             nonce=self.get_nonce(),
-        #             gasPrice=int(self.w3.eth.gas_price * 1.15),
-        #             gas=134500 + random.randint(1, 10000),
-        #             to=self.w3.to_checksum_address(approve_token_address),
-        #             data='0x095ea7b3000000000000000000000000dc094eac7cc01224e798f34543a8f9e9d25594790000000000000000000000000000000000000000000000056bc75e2d63100000',  # 0xa6f2ae3a
-        #         ),
-        #         self.account.key)
-        #     order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        #     transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        #     if transaction_receipt.status == 1:
-        #         # logger.debug(f'授权成功,{transaction_receipt.status}')
-        #         return True
-        #     else:
-        #         # logger.debug(f'授权失败,{transaction_receipt.status}')
-        #         return False
-        # # if spender == nft_address:
-        # #     amount = 18
-        approve_contract = self.w3.eth.contract(address=approve_token_address, abi=erc_20_abi)
-        allowance_balance = approve_contract.functions.allowance(self.account.address, spender).call()
-        if allowance_balance > amount:
-            logger.debug(f'已授权,无须重复授权！')
-            return True
-            # 无限授权
-            # approve_amount = 0
-            # if spender == nft_address:
-            #     approve_amount = 18*10**18
-            # else:
-        approve_amount = int("0x" + "f" * 64, 16)
-        txn = approve_contract.functions.approve(spender, approve_amount).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            # logger.debug(f'授权成功,{transaction_receipt.status}')
-            return True
-        else:
-            # logger.debug(f'授权失败,{transaction_receipt.status}')
+        try:
+            approve_contract = self.w3.eth.contract(address=approve_token_address, abi=erc_20_abi)
+            allowance_balance = approve_contract.functions.allowance(self.account.address, spender).call()
+            if allowance_balance > amount:
+                logger.debug(f'已授权,无须重复授权！')
+                return True
+                # 无限授权
+                # approve_amount = 0
+                # if spender == nft_address:
+                #     approve_amount = 18*10**18
+                # else:
+            approve_amount = int("0x" + "f" * 64, 16)
+            txn = approve_contract.functions.approve(spender, approve_amount).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'授权成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'授权失败,{transaction_receipt.status}')
+                return False
+        except Exception as e:
+            self.deal_with_e_message(e)
             return False
 
     def bex_swap(self, amount_in: int, asset_in_address: Union[Address, ChecksumAddress],
@@ -361,96 +358,66 @@ class BeraChainTools(object):
         :param asset_out_address: 输出 token 地址
         :return:
         """
-        if asset_in_address == wbear_address:
-            balance = self.w3.eth.get_balance(self.account.address)
-            assert balance != 0
-            assert balance >= amount_in
-        else:
-            asset_in_token_contract = self.w3.eth.contract(address=asset_in_address, abi=erc_20_abi)
-            balance = asset_in_token_contract.functions.balanceOf(self.account.address).call()
-            assert balance != 0
-            assert balance >= amount_in
-        #     allowance_balance = asset_in_token_contract.functions.allowance(self.account.address,
-        #                                                                     bex_swap_address).call()
-        #     if allowance_balance < amount_in:
-        #         raise ValueError(
-        #             f'需要授权\nplease run : \nbera.approve_token(bex_swap_address, int("0x" + "f" * 64, 16), "{asset_in_address}")')
-        #
-        # headers = {'authority': 'artio-80085-dex-router.berachain.com', 'accept': '*/*',
-        #            'accept-language': 'zh-CN,zh;q=0.9', 'cache-control': 'no-cache',
-        #            'origin': 'https://artio.bex.berachain.com', 'pragma': 'no-cache',
-        #            'referer': 'https://artio.bex.berachain.com/', 'user-agent': self.fake.chrome()}
-        #
-        # params = {'quoteAsset': asset_out_address, 'baseAsset': asset_in_address, 'amount': amount_in,
-        #           'swap_type': 'given_in'}
-        #
-        # response = self.session.get('https://artio-80085-dex-router.berachain.com/dex/route', params=params,
-        #                             headers=headers)
-        # # print(params)
-        # print(response.text)
-        # assert response.status_code == 200
-        # swaps_list = response.json()['steps']
-        swaps = list()
-        # for index, info in enumerate(swaps_list):
-        #     swaps.append(dict(
-        #         poolId=self.w3.to_checksum_address(info['pool']),
-        #         assetIn=self.w3.to_checksum_address(info['assetIn']),
-        #         amountIn=int(info['amountIn']),
-        #         assetOut=self.w3.to_checksum_address(info['assetOut']),
-        #         # amountOut=0 if index + 1 != len(swaps_list) else int(int(info['amountOut']) * 0.4),
-        #         amountOut=0,
-        #         userData=b''))
-        # if asset_in_address.lower() == wbear_address.lower():
-        #     swaps[0]['assetIn'] = zero_address
-        if asset_in_address == wbear_address and asset_out_address == usdc_address:
-            swaps.append(dict(
-                poolId='0x7D5b5C1937ff1b18B45AbC64aeAB68663a7a58Ab',
-                assetIn='0x0000000000000000000000000000000000000000',
-                amountIn=amount_in,
-                assetOut=usdc_address,
-                amountOut=0,
-                userData=b''
-            ))
-        elif asset_in_address == wbear_address and asset_out_address == weth_address:
-            swaps.append(dict(
-                poolId='0xD3C962F3F36484439A41d0E970cF6581dDf0a9A1',
-                assetIn='0x0000000000000000000000000000000000000000',
-                amountIn=amount_in,
-                assetOut=weth_address,
-                amountOut=0,
-                userData=b''
-            ))
-        elif asset_in_address == usdc_address and asset_out_address == honey_address:
-            swaps.append(dict(
-                poolId='0x5479FbDef04302D2DEEF0Cc78f7D503d81fDFCC9',
-                assetIn=usdc_address,
-                amountIn=amount_in,
-                assetOut=honey_address,
-                amountOut=0,
-                userData=b''
-            ))
-        else:
-            # logger.debug(f'交换失败,不支持的交易')
-            return False
+        try:
+            if asset_in_address == wbear_address:
+                balance = self.w3.eth.get_balance(self.account.address)
+                assert balance != 0
+                assert balance >= amount_in
+            else:
+                asset_in_token_contract = self.w3.eth.contract(address=asset_in_address, abi=erc_20_abi)
+                balance = asset_in_token_contract.functions.balanceOf(self.account.address).call()
+                assert balance != 0
+                assert balance >= amount_in
+            swaps = list()
+            if asset_in_address == wbear_address and asset_out_address == usdc_address:
+                swaps.append(dict(
+                    poolId='0x7D5b5C1937ff1b18B45AbC64aeAB68663a7a58Ab',
+                    assetIn='0x0000000000000000000000000000000000000000',
+                    amountIn=amount_in,
+                    assetOut=usdc_address,
+                    amountOut=0,
+                    userData=b''
+                ))
+            elif asset_in_address == wbear_address and asset_out_address == weth_address:
+                swaps.append(dict(
+                    poolId='0xD3C962F3F36484439A41d0E970cF6581dDf0a9A1',
+                    assetIn='0x0000000000000000000000000000000000000000',
+                    amountIn=amount_in,
+                    assetOut=weth_address,
+                    amountOut=0,
+                    userData=b''
+                ))
+            elif asset_in_address == usdc_address and asset_out_address == honey_address:
+                swaps.append(dict(
+                    poolId='0x5479FbDef04302D2DEEF0Cc78f7D503d81fDFCC9',
+                    assetIn=usdc_address,
+                    amountIn=amount_in,
+                    assetOut=honey_address,
+                    amountOut=0,
+                    userData=b''
+                ))
+            else:
+                return False
 
-        # print(swaps)
-
-        txn = self.bex_contract.functions.batchSwap(kind=0, swaps=swaps, deadline=99999999).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'value': amount_in if asset_in_address == wbear_address else 0,
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        # 等待交易收据
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            # logger.debug(f'交换成功,{transaction_receipt.status}')
-            return True
-        else:
-            # logger.debug(f'交换失败,{transaction_receipt.status}')
+            txn = self.bex_contract.functions.batchSwap(kind=0, swaps=swaps, deadline=99999999).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'value': amount_in if asset_in_address == wbear_address else 0,
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            # 等待交易收据
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'交换成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'交换失败,{transaction_receipt.status}')
+                return False
+        except Exception as e:
+            self.deal_with_e_message(e)
             return False
 
     def bex_add_liquidity(self, amount_in: int, pool_address: Union[Address], asset_in_address: Union[Address]) -> bool:
@@ -461,26 +428,30 @@ class BeraChainTools(object):
         :param asset_in_address: 需要加流动性的token地址
         :return:
         """
-        asset_in_token_contract = self.w3.eth.contract(address=asset_in_address, abi=erc_20_abi)
-        token_balance = asset_in_token_contract.functions.balanceOf(self.account.address).call()
-        assert token_balance != 0
-        assert token_balance >= amount_in
-        txn = self.bex_contract.functions.addLiquidity(pool=pool_address, receiver=self.account.address,
-                                                       assetsIn=[asset_in_address],
-                                                       amountsIn=[amount_in]).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            # logger.debug(f'bex 增加流动性成功,{transaction_receipt.status}')
-            return True
-        else:
-            # logger.debug(f'bex 增加流动性失败,{transaction_receipt.status}')
+        try:
+            asset_in_token_contract = self.w3.eth.contract(address=asset_in_address, abi=erc_20_abi)
+            token_balance = asset_in_token_contract.functions.balanceOf(self.account.address).call()
+            assert token_balance != 0
+            assert token_balance >= amount_in
+            txn = self.bex_contract.functions.addLiquidity(pool=pool_address, receiver=self.account.address,
+                                                           assetsIn=[asset_in_address],
+                                                           amountsIn=[amount_in]).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'bex 增加流动性成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'bex 增加流动性失败,{transaction_receipt.status}')
+                return False
+        except Exception as e:
+            self.deal_with_e_message(e)
             return False
 
     def honey_mint(self, amount_usdc_in: int) -> bool:
@@ -489,25 +460,27 @@ class BeraChainTools(object):
         :param amount_usdc_in: 输入数量
         :return:
         """
-        usdc_balance = self.usdc_contract.functions.balanceOf(self.account.address).call()
-        assert usdc_balance != 0
-        assert usdc_balance >= amount_usdc_in
-        txn = self.honey_swap_contract.functions.mint(to=self.account.address, collateral=usdc_address,
-                                                      amount=amount_usdc_in, ).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            return True
-        else:
+        try:
+            usdc_balance = self.usdc_contract.functions.balanceOf(self.account.address).call()
+            assert usdc_balance != 0
+            assert usdc_balance >= amount_usdc_in
+            txn = self.honey_swap_contract.functions.mint(to=self.account.address, collateral=usdc_address,
+                                                          amount=amount_usdc_in, ).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
             return False
-        # logger.debug(f'STGUSDC转换HONEY成功,{transaction_receipt.status}')
-        # return order_hash.hex()
 
     def honey_redeem(self, amount_honey_in: int) -> bool:
         """
@@ -515,25 +488,27 @@ class BeraChainTools(object):
         :param amount_honey_in: 输入数量
         :return:
         """
-        honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
-        assert honey_balance != 0
-        assert honey_balance >= amount_honey_in
-        txn = self.honey_swap_contract.functions.redeem(to=self.account.address, amount=amount_honey_in,
-                                                        collateral=usdc_address).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            return True
-        else:
+        try:
+            honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
+            assert honey_balance != 0
+            assert honey_balance >= amount_honey_in
+            txn = self.honey_swap_contract.functions.redeem(to=self.account.address, amount=amount_honey_in,
+                                                            collateral=usdc_address).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
             return False
-        # logger.debug(f'HONEY转换STGUSDC成功,{transaction_receipt.status}')
-        # return order_hash.hex()
 
     def bend_deposit(self, amount_in: int, amount_in_token_address: Union[Address]) -> bool:
         """
@@ -542,27 +517,29 @@ class BeraChainTools(object):
         :param amount_in_token_address: 代币地址
         :return:
         """
-        amount_in_token_contract = self.w3.eth.contract(address=amount_in_token_address, abi=erc_20_abi)
-        token_balance = amount_in_token_contract.functions.balanceOf(self.account.address).call()
-        assert token_balance != 0
-        assert token_balance >= amount_in
-        txn = self.bend_contract.functions.supply(asset=amount_in_token_address, amount=amount_in,
-                                                  onBehalfOf=self.account.address, referralCode=0).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            return True
-        else:
+        try:
+            amount_in_token_contract = self.w3.eth.contract(address=amount_in_token_address, abi=erc_20_abi)
+            token_balance = amount_in_token_contract.functions.balanceOf(self.account.address).call()
+            assert token_balance != 0
+            assert token_balance >= amount_in
+            txn = self.bend_contract.functions.supply(asset=amount_in_token_address, amount=amount_in,
+                                                      onBehalfOf=self.account.address,
+                                                      referralCode=0).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
             return False
-
-        # # logger.debug(f'存钱成功,{transaction_receipt.status}')
-        # return order_hash.hex()
 
     def bend_borrow(self, amount_out: int, asset_token_address: Union[Address]) -> bool:
         """
@@ -571,23 +548,25 @@ class BeraChainTools(object):
         :param asset_token_address: 借款代币地址
         :return:
         """
-        txn = self.bend_contract.functions.borrow(asset=asset_token_address, amount=amount_out,
-                                                  interestRateMode=2, referralCode=0,
-                                                  onBehalfOf=self.account.address).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            return True
-        else:
+        try:
+            txn = self.bend_contract.functions.borrow(asset=asset_token_address, amount=amount_out,
+                                                      interestRateMode=2, referralCode=0,
+                                                      onBehalfOf=self.account.address).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
             return False
-        # logger.debug(f'借款成功,{transaction_receipt.status}')
-        # return order_hash.hex()
 
     def bend_repay(self, repay_amount: int, asset_token_address: Union[Address]) -> bool:
         """
@@ -596,86 +575,102 @@ class BeraChainTools(object):
         :param asset_token_address: repay 代币地址
         :return:
         """
-        txn = self.bend_contract.functions.repay(asset=asset_token_address, amount=repay_amount,
-                                                 interestRateMode=2, onBehalfOf=self.account.address).build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            return True
-        else:
+        try:
+            txn = self.bend_contract.functions.repay(asset=asset_token_address, amount=repay_amount,
+                                                     interestRateMode=2,
+                                                     onBehalfOf=self.account.address).build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
             return False
 
     def honey_jar_mint(self):
-        # honey_balance = self.honey_contract.functions.balanceOf(self.account.address).call()
-        has_mint = self.ooga_booga_contract.functions.hasMinted(self.account.address).call()
-        if has_mint:
-            # logger.debug(f'已mint！')
-            return True
-        signed_txn = self.w3.eth.account.sign_transaction(
-            dict(
-                chainId=80085,
-                nonce=self.get_nonce(),
-                gasPrice=int(self.w3.eth.gas_price * gas_rate),
-                gas=134500 + random.randint(1, 10000),
-                to=self.w3.to_checksum_address(ooga_booga_address),
-                data='0xa6f2ae3a',
-            ),
-            self.account.key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            # logger.debug(f'mint成功,{transaction_receipt.status}')
-            return True
-        else:
-            # logger.debug(f'mint失败,{transaction_receipt.status}')
+        try:
+            has_mint = self.ooga_booga_contract.functions.hasMinted(self.account.address).call()
+            if has_mint:
+                # logger.debug(f'已mint！')
+                return True
+            signed_txn = self.w3.eth.account.sign_transaction(
+                dict(
+                    chainId=80085,
+                    nonce=self.get_nonce(),
+                    gasPrice=int(self.w3.eth.gas_price * gas_rate),
+                    gas=134500 + random.randint(1, 10000),
+                    to=self.w3.to_checksum_address(ooga_booga_address),
+                    data='0xa6f2ae3a',
+                ),
+                self.account.key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'mint成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'mint失败,{transaction_receipt.status}')
+                return False
+        except Exception as e:
+            print(e)
             return False
 
     def nft_mint(self):
-        has_mint = self.nft_contract.functions.hasMinted(self.account.address).call()
-        if has_mint:
-            # logger.debug(f'已mint！')
-            return True
-        txn = self.nft_contract.functions.buy().build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            # logger.debug(f'mint成功,{transaction_receipt.status}')
-            return True
-        else:
-            # logger.debug(f'mint失败,{transaction_receipt.status}')
+        try:
+            has_mint = self.nft_contract.functions.hasMinted(self.account.address).call()
+            if has_mint:
+                # logger.debug(f'已mint！')
+                return True
+            txn = self.nft_contract.functions.buy().build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'mint成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'mint失败,{transaction_receipt.status}')
+                return False
+        except Exception as e:
+            print(e)
             return False
 
     def nft2_mint(self):
-        has_mint = self.nft2_contract.functions.hasMinted(self.account.address).call()
-        if has_mint:
-            # logger.debug(f'已mint！')
-            return True
-        txn = self.nft2_contract.functions.buy().build_transaction(
-            {
-                'gas': 500000 + random.randint(1, 10000),
-                'gasPrice': int(self.w3.eth.gas_price * gas_rate),
-                'nonce': self.get_nonce()
-            })
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            # logger.debug(f'mint成功,{transaction_receipt.status}')
-            return True
-        else:
-            # logger.debug(f'mint失败,{transaction_receipt.status}')
+        try:
+            has_mint = self.nft2_contract.functions.hasMinted(self.account.address).call()
+            if has_mint:
+                # logger.debug(f'已mint！')
+                return True
+            txn = self.nft2_contract.functions.buy().build_transaction(
+                {
+                    'gas': 500000 + random.randint(1, 10000),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'nonce': self.get_nonce()
+                })
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                # logger.debug(f'mint成功,{transaction_receipt.status}')
+                return True
+            else:
+                # logger.debug(f'mint失败,{transaction_receipt.status}')
+                return False
+        except Exception as e:
+            print(e)
             return False
 
     def send_bera20(self):
@@ -781,7 +776,8 @@ class BeraChainTools(object):
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             # return True
-            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash, timeout=wait_time_out)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash,
+                                                                           timeout=wait_time_out)
             if transaction_receipt.status == 1:
                 # logger.debug(f'mint成功,{transaction_receipt.status}')
                 return True
@@ -803,26 +799,30 @@ class BeraChainTools(object):
         :return:
         """
         ""
-        set_solc_version(solc_version)
-        compiled_sol = compile_source(contract_source_code, optimize=True)
-        contract_id, contract_interface = compiled_sol.popitem()
-        gas_estimate = self.w3.eth.estimate_gas({'data': contract_interface['bin']})
-        # print(gas_estimate)
-        gas_price = int(self.w3.eth.gas_price * gas_rate)
-        gas_limit = int(gas_estimate+10000)
-        gas = gas_price * gas_limit
-        # print("预估gas", gas / 10 ** 18)
-        txn = dict(
-            chainId=80085,
-            gas=gas_limit,
-            gasPrice=gas_price,
-            nonce=self.get_nonce(),
-            data=contract_interface['bin']
-        )
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-        transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
-        if transaction_receipt.status == 1:
-            return True
-        else:
+        try:
+            set_solc_version(solc_version)
+            compiled_sol = compile_source(contract_source_code, optimize=True)
+            contract_id, contract_interface = compiled_sol.popitem()
+            gas_estimate = self.w3.eth.estimate_gas({'data': contract_interface['bin']})
+            # print(gas_estimate)
+            gas_price = int(self.w3.eth.gas_price * gas_rate)
+            gas_limit = int(gas_estimate + 10000)
+            gas = gas_price * gas_limit
+            # print("预估gas", gas / 10 ** 18)
+            txn = dict(
+                chainId=80085,
+                gas=gas_limit,
+                gasPrice=gas_price,
+                nonce=self.get_nonce(),
+                data=contract_interface['bin']
+            )
+            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+            transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
+            if transaction_receipt.status == 1:
+                return True
+            else:
+                return False
+        except Exception as e:
+            self.deal_with_e_message(e)
             return False
