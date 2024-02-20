@@ -11,12 +11,12 @@ from utils.bex_interaction_utils import bex_interacte
 from utils.deploy_contract import deploy_contract
 from utils.honetjar_nft_mint import nft_mint
 from utils.honey_interaction_utils import honey_interacte
-from utils.honeyjar_interaction_utils import honeyjar_interacte
-from utils.waters_utils import generate_wallet
+# from utils.honeyjar_interaction_utils import honeyjar_interacte
+# from utils.waters_utils import generate_wallet
 from bera_tools import BeraChainTools
 # from utils.waters_utils import get_proxy
 import concurrent.futures
-from functools import partial
+# from functools import partial
 import random
 
 
@@ -89,7 +89,7 @@ def only_claim(arg):
             logger.debug(f"第{index}次交互,{account_address},测试币余额 {balance / 10 ** 18}")
             if balance < 10 * 10 ** 16:
                 try:
-                    break
+                    # break
                     result = bera.claim_bera()
                     if 'Txhash' in result.text or 'to the queue' in result.text:
                         logger.success(
@@ -129,7 +129,7 @@ def only_mint(arg):
         logger.error(f'第{index}次交互,{account_address},{e},耗时{time.time() - current_timestamp}')
 
 
-def claim_and_action(arg):
+def only_bend(arg):
     current_timestamp = time.time()
     index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
     try:
@@ -141,43 +141,36 @@ def claim_and_action(arg):
                               client_key=client_key,
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
-        has_mint = bera.nft_contract.functions.hasMinted(account.address).call()
-        if has_mint:
-            logger.debug(f"第{index}次交互,{account_address},无需重复交互")
-            return
-        for i in range(try_times):
-            balance = bera.get_balance()
-            logger.debug(f"第{index}次交互,{account_address},测试币余额 {balance / 10 ** 18}")
-            if balance < 4 * 10 ** 16:
-                try:
-                    result = bera.claim_bera()
-                    if 'Txhash' in result.text or 'to the queue' in result.text:
-                        logger.success(f'第{index}次交互,{account_address},领水成功,{result.text}\n')
-                        break
-                    else:
-                        logger.error(f'第{index}次交互,{account_address},领水失败,{result.text}\n')
-                except Exception as e:
-                    logger.error(f'第{index}次交互,{account_address},领水失败,{e}\n')
-            else:
-                break
         balance = bera.get_balance()
         if balance > 0:
-            bex_interacte(private_key, rpc_url, index, try_times)
-            honey_interacte(private_key, rpc_url, index, try_times)
-            steps = [
-                honeyjar_interacte,
-                bend_interacte,
-                deploy_contract,
-                nft_mint
-            ]
-            random.shuffle(steps)
-            for step in steps:
-                step(private_key, rpc_url, index, try_times)
+            bend_interacte(private_key, rpc_url, index, try_times)
             logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
         else:
-            logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
+            logger.error(f'第{index}次交互失败,{account_address},没有测试币,耗时{time.time() - current_timestamp}')
     except Exception as e:
-        logger.error(f'第{index}次交互,{account_address},{e}')
+        logger.error(f'第{index}次交互,{account_address},{e},耗时{time.time() - current_timestamp}')
+
+
+def only_deploy_contract(arg):
+    current_timestamp = time.time()
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        balance = bera.get_balance()
+        if balance > 0:
+            deploy_contract(private_key, rpc_url, index, try_times)
+            logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+        else:
+            logger.error(f'第{index}次交互失败,{account_address},没有测试币,耗时{time.time() - current_timestamp}')
+    except Exception as e:
+        logger.error(f'第{index}次交互,{account_address},{e},耗时{time.time() - current_timestamp}')
 
 
 def only_dex(arg):
@@ -195,6 +188,27 @@ def only_dex(arg):
         balance = bera.get_balance()
         if balance > 0:
             bex_interacte(private_key, rpc_url, index, try_times)
+            logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+        else:
+            logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
+    except Exception as e:
+        logger.error(f'第{index}次交互,{account_address},{e}')
+
+
+def only_honey(arg):
+    current_timestamp = time.time()
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address},rpc: {rpc_url}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        balance = bera.get_balance()
+        if balance > 0:
             honey_interacte(private_key, rpc_url, index, try_times)
             logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
         else:
@@ -203,7 +217,7 @@ def only_dex(arg):
         logger.error(f'第{index}次交互,{account_address},{e}')
 
 
-def only_action(arg):
+def only_send20_create_domain_nft_deploy_contract_bend(arg):
     current_timestamp = time.time()
     index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
     try:
@@ -215,19 +229,46 @@ def only_action(arg):
                               client_key=client_key,
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
-        has_mint = bera.nft_contract.functions.hasMinted(account.address).call()
-        if has_mint:
-            logger.debug(f"第{index}次交互,{account_address},无需重复交互")
-            return
+        balance = bera.get_balance()
+        if balance > 0:
+            steps = [
+                send20,
+                create_domain_nft,
+                deploy_contract,
+                bend_interacte
+            ]
+            random.shuffle(steps)
+            for step in steps:
+                step(private_key, rpc_url, index, try_times)
+            logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+        else:
+            logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
+    except Exception as e:
+        logger.error(f'第{index}次交互,{account_address},{e}')
+
+
+def all_action(arg):
+    current_timestamp = time.time()
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
         balance = bera.get_balance()
         if balance > 0:
             bex_interacte(private_key, rpc_url, index, try_times)
             honey_interacte(private_key, rpc_url, index, try_times)
+            nft_mint(private_key, rpc_url, index, try_times)
             steps = [
-                honeyjar_interacte,
-                bend_interacte,
+                send20,
+                create_domain_nft,
                 deploy_contract,
-                nft_mint
+                bend_interacte
             ]
             random.shuffle(steps)
             for step in steps:
@@ -258,21 +299,6 @@ def main(try_times, max_workers, mode_index):
     solver_provider = get_app_item(app, 'solver_provider')
     client_key = get_app_item(app, 'client_key')
     rpc_list = get_app_item(app, 'rpc_list')
-    # print(file_path, rpc_url, proxy_url, solver_provider, client_key)
-    # 如果私钥文件,自动创建一个
-    # if not os.path.exists(file_path):
-    #     os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    #     with open(file_path, 'w') as file:
-    #         file.write('')
-    # if mode_init_wallet:
-    #     # 预期领水的地址数
-    #     count = 1800
-    #     # 线程数
-    #     max_workers = 5
-    #     generate_wallet(count, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key, file_path,
-    #                     max_workers)
-    # else:
-    interaction_count = 0  # 初始化交互计数器
     args = []
     with open(file_path, 'r') as file:
         op = 0
@@ -290,20 +316,34 @@ def main(try_times, max_workers, mode_index):
     for item in args:
         args2.append([index, item[0], item[1], item[2], item[3], item[4], item[5]])
         index += 1
-    modeList = [
-        only_claim,  # 0
-        only_mint,  # 1
-        only_action,  # 2
-        claim_and_action,  # 3
-        only_send20,  # 4
-        only_create_domain_nft,  # 5
-        only_dex,  # 6
+    # 流程：领水->交互DEX->UDSC兑换Honey->mint三张NFT/域名交互/发送铭文/借贷交互/部署合约
+    mode_list = [
+        only_claim,  # 0 只领水
+        only_dex,  # 1 只兑换
+        only_honey,  # 2 只交换Hoeny和USDC
+        only_mint,  # 3 只mintNFT,要有足够的Honey
+        only_send20,  # 4 只发送铭文
+        only_create_domain_nft,  # 5 只交互域名
+        only_deploy_contract,  # 6 只部署合约
+        only_bend,  # 7 只借贷
+        only_send20_create_domain_nft_deploy_contract_bend,  # 8 混合任务
+        all_action,  # 9 完成所有交互任务
     ]
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # 将任务提交给线程池
-        results = list(executor.map(modeList[mode_index], args2))
+        results = list(executor.map(mode_list[mode_index], args2))
 
 
 if __name__ == '__main__':
+    only_claim_mode = False  # 只批量领水
+    only_action_mode = True  # 只批量交互
     for i in range(3):
-        main(2, 12, 6)
+        if only_claim_mode and not only_action_mode:
+            main(5, 5, 0)  # 领水
+            break
+        # main(5, 5, 1)  # 只兑换
+        # main(5, 5, 2)  # 只交换Hoeny和USDC
+        # main(5, 5, 3)  # 只mintNFT,要有足够的Honey
+        # main(5, 5, 8)  # 只发送铭文/只交互域名/只部署合约/只借贷
+
+        main(5, 10, 9)

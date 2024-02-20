@@ -19,7 +19,7 @@ function generateAccounts(numAccounts) {
   return accounts;
 }
 
-const numAccounts = 10; // 要生成的账号数量
+const numAccounts = 500; // 要生成的账号数量
 const accounts = generateAccounts(numAccounts);
 const output = accounts.map(account => account.join(',')).join('\n');
 const time = Math.round(new Date() / 1000)

@@ -25,7 +25,7 @@ from config.address_config import bex_swap_address, usdc_address, honey_address,
     bex_approve_liquidity_address, weth_address, bend_address, bend_borrows_address, wbear_address, zero_address, \
     ooga_booga_address, aweth_address, ahoney_address, vdhoney_address, nft_address, nft2_address, domain_address
 
-gas_rate = 1.05
+gas_rate = 1.2
 wait_time_out = 60
 
 
@@ -807,15 +807,15 @@ class BeraChainTools(object):
         compiled_sol = compile_source(contract_source_code, optimize=True)
         contract_id, contract_interface = compiled_sol.popitem()
         gas_estimate = self.w3.eth.estimate_gas({'data': contract_interface['bin']})
-        print(gas_estimate)
-        gasPrice = int(self.w3.eth.gas_price * gas_rate)
-        gasLimit = 180000
-        gas = gasPrice * gasLimit
-        print("预估gas", gas / 10 ** 18)
+        # print(gas_estimate)
+        gas_price = int(self.w3.eth.gas_price * gas_rate)
+        gas_limit = int(gas_estimate+10000)
+        gas = gas_price * gas_limit
+        # print("预估gas", gas / 10 ** 18)
         txn = dict(
             chainId=80085,
-            gas=gasLimit,
-            gasPrice=gasPrice,
+            gas=gas_limit,
+            gasPrice=gas_price,
             nonce=self.get_nonce(),
             data=contract_interface['bin']
         )
