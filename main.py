@@ -107,6 +107,25 @@ def only_claim(arg):
         logger.error(f'第{index}次交互,{account_address},领水失败,{e},耗时{time.time() - current_timestamp}')
 
 
+def only_check_gas(arg):
+    current_timestamp = time.time()
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        balance = bera.get_balance()
+        logger.debug(
+            f"第{index}次交互,地址: {account_address},测试币余额: {balance / 10 ** 18},耗时{time.time() - current_timestamp}")
+
+    except Exception as e:
+        logger.error(f'第{index}次交互,地址: {account_address},检测余额失败,耗时{time.time() - current_timestamp}')
+
+
 def only_mint(arg):
     current_timestamp = time.time()
     index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
@@ -342,6 +361,7 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
         only_bend,  # 7 只借贷
         only_send20_create_domain_nft_deploy_contract_bend,  # 8 混合任务
         all_action,  # 9 完成所有交互任务
+        only_check_gas,  # 10 只检测gas
     ]
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # 将任务提交给线程池
@@ -349,11 +369,10 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
 
 
 if __name__ == '__main__':
-    only_claim_mode = False  # 只批量领水
-    only_action_mode = True  # 只批量交互
+    claim_mode = False  # 只批量领水
     test_private_key_show = ''  # 测试私钥
     for i in range(2):
-        if only_claim_mode and not only_action_mode:
+        if claim_mode:
             main(5, 5, 0, test_private_key_show)  # 领水
             break
         # main(5, 5, 1, test_private_key_show)  # 只兑换
