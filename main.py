@@ -279,12 +279,12 @@ def all_action(arg):
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
         gas_price = bera.get_gas_price()
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        app = config._sections['app']
-        max_gas_price = get_app_item(app, 'max_gas_price')
-        if max_gas_price == '':
-            max_gas_price = 10 ** 10
+        # config = configparser.ConfigParser()
+        # config.read('config.ini')
+        # app = config._sections['app']
+        # max_gas_price = get_app_item(app, 'max_gas_price')
+        # if max_gas_price == '':
+        max_gas_price = 10 ** 10
         if gas_price < int(max_gas_price):
             logger.debug(f'第{index}次交互,{account_address},当前gas: {gas_price / 10 ** 9}')
             balance = bera.get_balance()
@@ -389,5 +389,5 @@ if __name__ == '__main__':
         # main(5, 5, 3, test_private_key_show)  # 只mintNFT,要有足够的Honey
         # main(5, 5, 8, test_private_key_show)  # 只发送铭文/只交互域名/只部署合约/只借贷
         #
-        main(5, 15, 9, test_private_key_show)
+        main(5, 9, 9, test_private_key_show)
         # main(5, 15, 6, test_private_key_show)

@@ -56,7 +56,7 @@ def get_proxy():
             'https': proxy_list
         }
     else:
-        aaa = requests.get(proxy_url, verify=False).text
+        aaa = requests.get(proxy_url, verify=False, proxies={}).text
         proxy_host = aaa.splitlines()[0]
         proxy = {
             'http': 'http://' + proxy_host,
