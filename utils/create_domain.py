@@ -15,7 +15,7 @@ def create_domain_nft_(private_key, rpc_url, index):
         account_address = account.address
         bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)
         balance = bera.domain_contract.functions.balanceOf(account.address).call()
-        if balance > 0:
+        if balance > 3:
             logger.success(f'第{index}次交互:{account_address},不用重复创建域名')
             return True
         # 部署合约

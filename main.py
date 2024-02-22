@@ -22,7 +22,7 @@ import random
 
 def only_send20(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, rpc_list = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
@@ -289,19 +289,27 @@ def all_action(arg):
             logger.debug(f'第{index}次交互,{account_address},当前gas: {gas_price / 10 ** 9}')
             balance = bera.get_balance()
             if balance > 0:
-                bex_interacte(private_key, rpc_url, index, try_times)
-                honey_interacte(private_key, rpc_url, index, try_times)
-                nft_mint(private_key, rpc_url, index, try_times)
-                steps = [
-                    send20,
-                    create_domain_nft,
-                    deploy_contract,
-                    bend_interacte
-                ]
-                random.shuffle(steps)
-                for step in steps:
-                    step(private_key, rpc_url, index, try_times)
-                logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+                has_mint_oga = bera.ooga_booga_contract.functions.hasMinted(account_address).call()
+                ahoney_balance = bera.ahoney_contract.functions.balanceOf(account.address).call()
+                domain_balance = bera.domain_contract.functions.balanceOf(account.address).call()
+                if has_mint_oga and ahoney_balance > 0 and domain_balance > 0:
+                    logger.success(
+                        f'第{index}次交互,{account_address},已经交互过了,耗时{time.time() - current_timestamp}')
+                else:
+                    bex_interacte(private_key, rpc_url, index, try_times)
+                    honey_interacte(private_key, rpc_url, index, try_times)
+                    nft_mint(private_key, rpc_url, index, try_times)
+                    steps = [
+                        send20,
+                        create_domain_nft,
+                        deploy_contract,
+                        bend_interacte
+                    ]
+                    random.shuffle(steps)
+                    for step in steps:
+                        step(private_key, rpc_url, index, try_times)
+                    logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
+
             else:
                 logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
         else:
@@ -375,6 +383,7 @@ if __name__ == '__main__':
         if claim_mode:
             main(5, 5, 0, test_private_key_show)  # 领水
             break
+        # main(5, 5, 5, test_private_key_show)  # 只兑换
         # main(5, 5, 1, test_private_key_show)  # 只兑换
         # main(5, 5, 2, test_private_key_show)  # 只交换Hoeny和USDC
         # main(5, 5, 3, test_private_key_show)  # 只mintNFT,要有足够的Honey

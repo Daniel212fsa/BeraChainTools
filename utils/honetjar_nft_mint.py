@@ -16,9 +16,9 @@ def nft_mint(private_key, rpc_url, index, try_times):
     account_address = account.address
     bera = BeraChainTools(private_key=account.key, rpc_url=rpc_url)
     total_swap_amount = 0
-    has_mint_nft2 = bera.nft2_contract.functions.hasMinted(account.address).call()
-    if not has_mint_nft2:
-        total_swap_amount += 2.22 * 10 ** 18
+    # has_mint_nft2 = bera.nft2_contract.functions.hasMinted(account.address).call()
+    # if not has_mint_nft2:
+    #     total_swap_amount += 2.22 * 10 ** 18
     has_mint_oga = bera.ooga_booga_contract.functions.hasMinted(account.address).call()
     if not has_mint_oga:
         total_swap_amount += 4.2 * 10 ** 18
@@ -37,11 +37,11 @@ def nft_mint(private_key, rpc_url, index, try_times):
         else:
             break
     # exit()
-    if not has_mint_nft2:
-        for _ in range(try_times):
-            if nft_mint_(private_key, rpc_url, index, try_times, bera, bera.nft2_contract, nft2_address, bera.nft2_mint,
-                         222 * 10 ** 16, 'nft2'):
-                break
+    # if not has_mint_nft2:
+    #     for _ in range(try_times):
+    #         if nft_mint_(private_key, rpc_url, index, try_times, bera, bera.nft2_contract, nft2_address, bera.nft2_mint,
+    #                      222 * 10 ** 16, 'nft2'):
+    #             break
     if not has_mint_oga:
         for _ in range(try_times):
             if nft_mint_(private_key, rpc_url, index, try_times, bera, bera.ooga_booga_contract, ooga_booga_address,

@@ -332,8 +332,9 @@ class BeraChainTools(object):
             approve_amount = int("0x" + "f" * 64, 16)
             txn = approve_contract.functions.approve(spender, approve_amount).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -346,7 +347,7 @@ class BeraChainTools(object):
                 # logger.debug(f'授权失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            self.deal_with_e_message(e)
+            print('approve_token', e)
             return False
 
     def bex_swap(self, amount_in: int, asset_in_address: Union[Address, ChecksumAddress],
@@ -401,9 +402,10 @@ class BeraChainTools(object):
 
             txn = self.bex_contract.functions.batchSwap(kind=0, swaps=swaps, deadline=99999999).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
                     'value': amount_in if asset_in_address == wbear_address else 0,
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -417,7 +419,7 @@ class BeraChainTools(object):
                 # logger.debug(f'交换失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            self.deal_with_e_message(e)
+            print('bex_swap', e)
             return False
 
     def bex_add_liquidity(self, amount_in: int, pool_address: Union[Address], asset_in_address: Union[Address]) -> bool:
@@ -437,8 +439,9 @@ class BeraChainTools(object):
                                                            assetsIn=[asset_in_address],
                                                            amountsIn=[amount_in]).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -451,7 +454,7 @@ class BeraChainTools(object):
                 # logger.debug(f'bex 增加流动性失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            self.deal_with_e_message(e)
+            print('bex_add_liquidity', e)
             return False
 
     def honey_mint(self, amount_usdc_in: int) -> bool:
@@ -467,8 +470,9 @@ class BeraChainTools(object):
             txn = self.honey_swap_contract.functions.mint(to=self.account.address, collateral=usdc_address,
                                                           amount=amount_usdc_in, ).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -479,7 +483,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print(e)
+            print('honey_mint', e)
             return False
 
     def honey_redeem(self, amount_honey_in: int) -> bool:
@@ -495,8 +499,9 @@ class BeraChainTools(object):
             txn = self.honey_swap_contract.functions.redeem(to=self.account.address, amount=amount_honey_in,
                                                             collateral=usdc_address).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -507,7 +512,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print(e)
+            print('honey_redeem', e)
             return False
 
     def bend_deposit(self, amount_in: int, amount_in_token_address: Union[Address]) -> bool:
@@ -526,8 +531,9 @@ class BeraChainTools(object):
                                                       onBehalfOf=self.account.address,
                                                       referralCode=0).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -538,7 +544,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print(e)
+            print('bend_deposit', e)
             return False
 
     def bend_borrow(self, amount_out: int, asset_token_address: Union[Address]) -> bool:
@@ -553,8 +559,9 @@ class BeraChainTools(object):
                                                       interestRateMode=2, referralCode=0,
                                                       onBehalfOf=self.account.address).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -565,7 +572,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print(e)
+            print('bend_borrow', e)
             return False
 
     def bend_repay(self, repay_amount: int, asset_token_address: Union[Address]) -> bool:
@@ -580,8 +587,9 @@ class BeraChainTools(object):
                                                      interestRateMode=2,
                                                      onBehalfOf=self.account.address).build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -592,7 +600,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print(e)
+            print('bend_repay', e)
             return False
 
     def honey_jar_mint(self):
@@ -620,7 +628,7 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print(e)
+            print('honey_jar_mint', e)
             return False
 
     def nft_mint(self):
@@ -631,8 +639,9 @@ class BeraChainTools(object):
                 return True
             txn = self.nft_contract.functions.buy().build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -645,7 +654,7 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print(e)
+            print('nft_mint', e)
             return False
 
     def nft2_mint(self):
@@ -656,8 +665,9 @@ class BeraChainTools(object):
                 return True
             txn = self.nft2_contract.functions.buy().build_transaction(
                 {
-                    'gas': 500000 + random.randint(1, 10000),
-                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'from': self.account.address,
+                    # 'gas': 500000 + random.randint(1, 10000),
+                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -670,21 +680,25 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print(e)
+            print('nft2_mint', e)
             return False
 
     def send_bera20(self):
         try:
+            transaction = dict(
+                chainId=80085,
+                nonce=self.get_nonce(),
+                gasPrice=int(self.w3.eth.gas_price * gas_rate),
+                to=self.w3.to_checksum_address(self.account.address),
+                data='0x646174613a2c7b2270223a22626572612d3230222c226f70223a226d696e74222c227469636b223a224245524173222c22616d74223a2231303030227d',
+            )
+            gas_estimate = self.w3.eth.estimate_gas(transaction)
+            gas_limit = gas_estimate + random.randint(1, 10000)
+            transaction['gas'] = gas_limit
             signed_txn = self.w3.eth.account.sign_transaction(
-                dict(
-                    chainId=80085,
-                    nonce=self.get_nonce(),
-                    gasPrice=int(self.w3.eth.gas_price * gas_rate),
-                    gas=22000 + random.randint(1, 10000),
-                    to=self.w3.to_checksum_address(self.account.address),
-                    data='0x646174613a2c7b2270223a22626572612d3230222c226f70223a226d696e74222c227469636b223a224245524173222c22616d74223a2231303030227d',
-                ),
-                self.account.key)
+                transaction,
+                self.account.key
+            )
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             # return True
             transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
@@ -695,7 +709,7 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print(e)
+            print('send_bera20', e)
             return False
 
     def create_domain(self):
@@ -761,31 +775,25 @@ class BeraChainTools(object):
             domain_len_list = [5, 6, 7, 8]
             domain_len = random.choice(domain_len_list)
             random_selection = random.sample(combined_list, domain_len)
-            gas = int(self.w3.eth.gas_price * gas_rate)
-            # if gas < 10 ** 8:
-            #     gas = 10 ** 8
-            txn = self.domain_contract.functions.mintNative(random_selection, 1, self.account.address,
-                                                            "https://beranames.com/api/metadata/69",
-                                                            self.account.address).build_transaction(
+            # gas = int(self.w3.eth.gas_price * gas_rate)
+            transaction = self.domain_contract.functions.mintNative(random_selection, 1, self.account.address,
+                                                                    "https://beranames.com/api/metadata/69",
+                                                                    self.account.address).build_transaction(
                 {
-                    'gas': 800000 + random.randint(1, 10000),
-                    'gasPrice': gas,
+                    'from': self.account.address,
                     'nonce': self.get_nonce(),
                     'value': int(608610 * 10 ** 9)
                 })
-            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            signed_txn = self.w3.eth.account.sign_transaction(transaction, private_key=self.private_key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
-            # return True
             transaction_receipt = self.w3.eth.wait_for_transaction_receipt(transaction_hash=order_hash,
                                                                            timeout=wait_time_out)
             if transaction_receipt.status == 1:
-                # logger.debug(f'mint成功,{transaction_receipt.status}')
                 return True
             else:
-                # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print(e)
+            print('create_domain', e)
             return False
 
     def deploy_contract(self, contract_source_code, solc_version):
@@ -803,20 +811,17 @@ class BeraChainTools(object):
             set_solc_version(solc_version)
             compiled_sol = compile_source(contract_source_code, optimize=True)
             contract_id, contract_interface = compiled_sol.popitem()
-            gas_estimate = self.w3.eth.estimate_gas({'data': contract_interface['bin']})
-            # print(gas_estimate)
             gas_price = int(self.w3.eth.gas_price * gas_rate)
-            gas_limit = int(gas_estimate + 10000)
-            gas = gas_price * gas_limit
-            # print("预估gas", gas / 10 ** 18)
-            txn = dict(
+            transaction = dict(
                 chainId=80085,
-                gas=gas_limit,
                 gasPrice=gas_price,
                 nonce=self.get_nonce(),
                 data=contract_interface['bin']
             )
-            signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+            gas_estimate = self.w3.eth.estimate_gas(transaction)
+            gas_limit = gas_estimate + random.randint(1, 10000)
+            transaction['gas'] = gas_limit
+            signed_txn = self.w3.eth.account.sign_transaction(transaction, private_key=self.private_key)
             order_hash = self.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
             transaction_receipt = self.w3.eth.wait_for_transaction_receipt(order_hash, timeout=wait_time_out)
             if transaction_receipt.status == 1:
@@ -824,5 +829,5 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            self.deal_with_e_message(e)
+            print('deploy_contract', e)
             return False
