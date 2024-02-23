@@ -266,6 +266,20 @@ def only_send20_create_domain_nft_deploy_contract_bend(arg):
         logger.error(f'第{index}次交互,{account_address},{e}')
 
 
+def append_data(data):
+    file_path = 'wallet/bera_private_keys_hcy_auto_all_ok.txt'
+    if not os.path.exists(file_path):
+        with open(file_path, "w") as file:
+            pass
+    with open(file_path, "r") as file:
+        lines = file.readlines()
+    if data + "\n" not in lines:
+        with open(file_path, "a") as file:
+            file.write(data + "\n")
+    else:
+        print("数据已存在，不进行追加操作")
+
+
 def all_action(arg):
     current_timestamp = time.time()
     index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
@@ -293,6 +307,7 @@ def all_action(arg):
                 ahoney_balance = bera.ahoney_contract.functions.balanceOf(account.address).call()
                 domain_balance = bera.domain_contract.functions.balanceOf(account.address).call()
                 if has_mint_oga and ahoney_balance > 0 and domain_balance > 0:
+                    append_data(private_key + ',,' + account_address)
                     logger.success(
                         f'第{index}次交互,{account_address},已经交互过了,耗时{time.time() - current_timestamp}')
                 else:
@@ -318,6 +333,31 @@ def all_action(arg):
         logger.error(f'第{index}次交互,{account_address},{e}')
 
 
+def check_all_action(arg):
+    current_timestamp = time.time()
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    try:
+        account = Account.from_key(private_key)
+        account_address = account.address
+        logger.debug(f"第{index}次交互,地址:{account_address}")
+        bera = BeraChainTools(private_key=private_key,
+                              proxy_url=proxy_url,
+                              client_key=client_key,
+                              solver_provider=solver_provider,
+                              rpc_url=rpc_url)
+        has_mint_oga = bera.ooga_booga_contract.functions.hasMinted(account_address).call()
+        ahoney_balance = bera.ahoney_contract.functions.balanceOf(account.address).call()
+        domain_balance = bera.domain_contract.functions.balanceOf(account.address).call()
+        if has_mint_oga and ahoney_balance > 0 and domain_balance > 0:
+            append_data(private_key + ',,' + account_address)
+            logger.success(
+                f'第{index}次交互,{account_address},已经交互过了,耗时{time.time() - current_timestamp}')
+        else:
+            pass
+    except Exception as e:
+        logger.error(f'第{index}次交互,{account_address},{e}')
+
+
 def get_app_item(values, index):
     if index in values:
         k = values[index]
@@ -337,6 +377,15 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
     solver_provider = get_app_item(app, 'solver_provider')
     client_key = get_app_item(app, 'client_key')
     rpc_list = get_app_item(app, 'rpc_list')
+    file_path_0 = 'wallet/bera_private_keys_hcy_auto_all_ok.txt'
+    args_0 = []
+    with open(file_path_0, 'r') as file:
+        for private_key in file:
+            private_key_str = private_key.strip()
+            private_key_item = private_key_str.split(",")
+            private_key_show = private_key_item[0]
+            args_0.append(private_key_show)
+
     args = []
     with open(file_path, 'r') as file:
         op = 0
@@ -346,12 +395,14 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
             private_key_show = private_key_item[0]
             if len(test_private_key_show) > 0:
                 private_key_show = test_private_key_show
-            args.append([private_key_show, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key,
-                         try_times])
+            if private_key_show not in args_0:
+                args.append([private_key_show, get_rand_rpc(rpc_url, rpc_list), proxy_url, solver_provider, client_key,
+                             try_times])
             op += 1
             if len(test_private_key_show) > 0:
                 break
     random.shuffle(args)
+    logger.debug(f'等待执行任务的地址数为{len(args)}')
     args2 = []
     index = 0
     for item in args:
@@ -370,6 +421,7 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
         only_send20_create_domain_nft_deploy_contract_bend,  # 8 混合任务
         all_action,  # 9 完成所有交互任务
         only_check_gas,  # 10 只检测gas
+        check_all_action,  # 11 检查是否完成任务
     ]
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # 将任务提交给线程池
@@ -379,7 +431,7 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
 if __name__ == '__main__':
     claim_mode = False  # 只批量领水
     test_private_key_show = ''  # 测试私钥
-    for i in range(2):
+    for i in range(1):
         if claim_mode:
             main(5, 5, 0, test_private_key_show)  # 领水
             break
@@ -389,5 +441,5 @@ if __name__ == '__main__':
         # main(5, 5, 3, test_private_key_show)  # 只mintNFT,要有足够的Honey
         # main(5, 5, 8, test_private_key_show)  # 只发送铭文/只交互域名/只部署合约/只借贷
         #
-        main(5, 9, 9, test_private_key_show)
+        main(5, 10, 10, test_private_key_show)
         # main(5, 15, 6, test_private_key_show)
