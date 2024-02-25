@@ -299,7 +299,6 @@ class BeraChainTools(object):
                                          timeout=30,
                                          verify=False
                                          )
-                # logger.debug(f'第{i}次使用代理{proxies["http"]},返回结果,{response.text}')
                 return response
             except Exception as e:
                 logger.debug(f'第{i}次使用代理{proxies["http"]},错误代码,{e}')
@@ -347,7 +346,7 @@ class BeraChainTools(object):
                 # logger.debug(f'授权失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print('approve_token', e)
+            print('approve_token', self.account.address, e)
             return False
 
     def bex_swap(self, amount_in: int, asset_in_address: Union[Address, ChecksumAddress],
@@ -419,7 +418,7 @@ class BeraChainTools(object):
                 # logger.debug(f'交换失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print('bex_swap', e)
+            print('bex_swap', self.account.address, e)
             return False
 
     def bex_add_liquidity(self, amount_in: int, pool_address: Union[Address], asset_in_address: Union[Address]) -> bool:
@@ -454,7 +453,7 @@ class BeraChainTools(object):
                 # logger.debug(f'bex 增加流动性失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print('bex_add_liquidity', e)
+            print('bex_add_liquidity', self.account.address, e)
             return False
 
     def honey_mint(self, amount_usdc_in: int) -> bool:
@@ -483,7 +482,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print('honey_mint', e)
+            print('honey_mint', self.account.address, e)
             return False
 
     def honey_redeem(self, amount_honey_in: int) -> bool:
@@ -512,7 +511,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print('honey_redeem', e)
+            print('honey_redeem', self.account.address, e)
             return False
 
     def bend_deposit(self, amount_in: int, amount_in_token_address: Union[Address]) -> bool:
@@ -544,7 +543,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print('bend_deposit', e)
+            print('bend_deposit', self.account.address, e)
             return False
 
     def bend_borrow(self, amount_out: int, asset_token_address: Union[Address]) -> bool:
@@ -572,7 +571,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print('bend_borrow', e)
+            print('bend_borrow', self.account.address, e)
             return False
 
     def bend_repay(self, repay_amount: int, asset_token_address: Union[Address]) -> bool:
@@ -600,7 +599,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print('bend_repay', e)
+            print('bend_repay', self.account.address, e)
             return False
 
     def honey_jar_mint(self):
@@ -628,7 +627,7 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print('honey_jar_mint', e)
+            print('honey_jar_mint', self.account.address, e)
             return False
 
     def nft_mint(self):
@@ -654,7 +653,7 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print('nft_mint', e)
+            print('nft_mint', self.account.address, e)
             return False
 
     def nft2_mint(self):
@@ -680,7 +679,7 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print('nft2_mint', e)
+            print('nft2_mint', self.account.address, e)
             return False
 
     def send_bera20(self):
@@ -709,7 +708,7 @@ class BeraChainTools(object):
                 # logger.debug(f'mint失败,{transaction_receipt.status}')
                 return False
         except Exception as e:
-            print('send_bera20', e)
+            print('send_bera20', self.account.address, e)
             return False
 
     def create_domain(self):
@@ -793,7 +792,7 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print('create_domain', e)
+            print('create_domain', self.account.address, e)
             return False
 
     def deploy_contract(self, contract_source_code, solc_version):
@@ -829,5 +828,5 @@ class BeraChainTools(object):
             else:
                 return False
         except Exception as e:
-            print('deploy_contract', e)
+            print('deploy_contract', self.account.address, e)
             return False

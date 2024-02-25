@@ -7,7 +7,8 @@ from loguru import logger
 from utils.create_domain import create_domain_nft
 from utils.send_20 import send20
 from utils.bend_interaction_utils import bend_interacte
-from utils.bex_interaction_utils import bex_interacte
+from utils.bex_liquidity_utils import bex_liquidity
+from utils.bex_swap_utils import bex_swap
 from utils.deploy_contract import deploy_contract
 from utils.honetjar_nft_mint import nft_mint
 from utils.honey_interaction_utils import honey_interacte
@@ -206,7 +207,8 @@ def only_dex(arg):
                               rpc_url=rpc_url)
         balance = bera.get_balance()
         if balance > 0:
-            bex_interacte(private_key, rpc_url, index, try_times)
+            bex_swap(private_key, rpc_url, index, try_times)
+            bex_liquidity(private_key, rpc_url, index, try_times)
             logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
         else:
             logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
@@ -311,23 +313,71 @@ def all_action(arg):
                     logger.success(
                         f'第{index}次交互,{account_address},已经交互过了,耗时{time.time() - current_timestamp}')
                 else:
-                    bex_interacte(private_key, rpc_url, index, try_times)
-                    honey_interacte(private_key, rpc_url, index, try_times)
-                    nft_mint(private_key, rpc_url, index, try_times)
-                    steps = [
-                        send20,
-                        create_domain_nft,
-                        deploy_contract,
-                        bend_interacte
+                    steps_lsit = [
+                        [
+                            [
+                                bex_swap,
+                                create_domain_nft,
+                                deploy_contract
+                            ],
+                            [
+                                bex_liquidity,
+                                honey_interacte
+                            ],
+                            [
+                                nft_mint,
+                                bend_interacte
+                            ]
+                        ],
+                        [
+                            [
+                                bex_swap,
+                            ],
+                            [
+                                create_domain_nft,
+                                deploy_contract,
+                                bex_liquidity,
+                                honey_interacte
+                            ],
+                            [
+                                nft_mint,
+                                bend_interacte
+                            ]
+                        ],
+                        [
+                            [
+                                bex_swap
+                            ],
+                            [
+                                bex_liquidity,
+                                honey_interacte
+                            ],
+                            [
+                                nft_mint,
+                                bend_interacte,
+                                create_domain_nft,
+                                deploy_contract
+                            ]
+                        ],
                     ]
-                    random.shuffle(steps)
-                    for step in steps:
-                        step(private_key, rpc_url, index, try_times)
+                    steps_lsit_new = random.choice(steps_lsit)
+                    for step_item in steps_lsit_new:
+                        random.shuffle(step_item)
+                        for step in step_item:
+                            step(private_key, rpc_url, index, try_times)
+                    has_mint_oga = bera.ooga_booga_contract.functions.hasMinted(account_address).call()
+                    ahoney_balance = bera.ahoney_contract.functions.balanceOf(account.address).call()
+                    domain_balance = bera.domain_contract.functions.balanceOf(account.address).call()
+                    if has_mint_oga and ahoney_balance > 0 and domain_balance > 0:
+                        append_data(private_key + ',,' + account_address)
+                        logger.success(
+                            f'第{index}次交互,{account_address},已经交互过了,耗时{time.time() - current_timestamp}')
                     logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
 
             else:
                 logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
         else:
+            logger.debug(f'第{index}次交互,{account_address},当前gas: {gas_price / 10 ** 9}')
             logger.error(f'第{index}次交互,{account_address},gasPrice过高,耗时{time.time() - current_timestamp}')
     except Exception as e:
         logger.error(f'第{index}次交互,{account_address},{e}')
@@ -441,5 +491,6 @@ if __name__ == '__main__':
         # main(5, 5, 3, test_private_key_show)  # 只mintNFT,要有足够的Honey
         # main(5, 5, 8, test_private_key_show)  # 只发送铭文/只交互域名/只部署合约/只借贷
         #
-        main(5, 10, 10, test_private_key_show)
+        main(5, 12, 11, test_private_key_show)
+        main(5, 12, 9, test_private_key_show)
         # main(5, 15, 6, test_private_key_show)
