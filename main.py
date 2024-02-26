@@ -96,6 +96,10 @@ def only_claim(arg):
                         logger.success(
                             f'第{index}次交互,{account_address},领水成功,耗时{time.time() - current_timestamp},{result.text}\n')
                         break
+                    elif 'You have exceeded the rate limit' in result.text:
+                        logger.error(
+                            f'第{index}次交互,{account_address},领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
+                        break
                     else:
                         logger.error(
                             f'第{index}次交互,{account_address},领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
@@ -481,7 +485,7 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
 if __name__ == '__main__':
     claim_mode = False  # 只批量领水
     test_private_key_show = ''  # 测试私钥
-    for i in range(1):
+    for i in range(3):
         if claim_mode:
             main(5, 5, 0, test_private_key_show)  # 领水
             break

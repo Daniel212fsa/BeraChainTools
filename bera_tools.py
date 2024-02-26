@@ -333,7 +333,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -404,7 +404,7 @@ class BeraChainTools(object):
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
                     'value': amount_in if asset_in_address == wbear_address else 0,
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -440,7 +440,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -471,7 +471,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -500,7 +500,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -532,7 +532,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -560,7 +560,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -588,7 +588,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -640,7 +640,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
@@ -666,7 +666,7 @@ class BeraChainTools(object):
                 {
                     'from': self.account.address,
                     # 'gas': 500000 + random.randint(1, 10000),
-                    # 'gasPrice': int(self.w3.eth.gas_price * gas_rate),
+                    'gasPrice': int(self.w3.eth.gas_price * gas_rate),
                     'nonce': self.get_nonce()
                 })
             signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
