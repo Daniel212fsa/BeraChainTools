@@ -36,5 +36,5 @@ def main_generate_accounts(_num_accounts):
 
 
 if __name__ == '__main__':
-    _num_accounts = 500
+    _num_accounts = 1500
     main_generate_accounts(_num_accounts)

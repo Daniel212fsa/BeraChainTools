@@ -52,11 +52,11 @@ def get_rand_rpc(rpc_url0, rpc_list0):
 def only_create_domain_nft(arg):
     name = '创建域名'
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f'第{index}次交互,{account_address},{name},rpc: {rpc_url}')
+        logger.debug(f'第{index}/{address_num}次交互,{account_address},{name},rpc: {rpc_url}')
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -75,20 +75,22 @@ def only_create_domain_nft(arg):
 
 def only_claim(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        # logger.debug(f"第{index}次交互,地址:{account_address}")
+        logger.debug(f"第{index}/{address_num}次交互,地址:{account_address}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
                               solver_provider=solver_provider,
                               rpc_url=rpc_url)
-        for i in range(try_times):
+        for i in range(3):
             balance = bera.get_balance()
-            logger.debug(f"第{index}次交互,{account_address},测试币余额 {balance / 10 ** 18}")
-            if balance < 10 * 10 ** 16:
+            logger.debug(f"第{index}/{address_num}次交互,{account_address},测试币余额 {balance / 10 ** 18}")
+            min_amount = 10 * 10 ** 16
+            min_amount = 0
+            if balance <= min_amount:
                 try:
                     # break
                     result = bera.claim_bera()
@@ -96,10 +98,10 @@ def only_claim(arg):
                         logger.success(
                             f'第{index}次交互,{account_address},领水成功,耗时{time.time() - current_timestamp},{result.text}\n')
                         break
-                    elif 'You have exceeded the rate limit' in result.text:
-                        logger.error(
-                            f'第{index}次交互,{account_address},领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
-                        break
+                    # elif 'You have exceeded the rate limit' in result.text:
+                    #     logger.error(
+                    #         f'第{index}次交互,{account_address},领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
+                    #     break
                     else:
                         logger.error(
                             f'第{index}次交互,{account_address},领水失败,耗时{time.time() - current_timestamp},{result.text}\n')
@@ -114,7 +116,7 @@ def only_claim(arg):
 
 def only_check_gas(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
@@ -125,7 +127,7 @@ def only_check_gas(arg):
                               rpc_url=rpc_url)
         balance = bera.get_balance()
         logger.debug(
-            f"第{index}次交互,地址: {account_address},测试币余额: {balance / 10 ** 18},耗时{time.time() - current_timestamp}")
+            f"第{index}/{address_num}次交互,地址: {account_address},测试币余额: {balance / 10 ** 18},耗时{time.time() - current_timestamp}")
 
     except Exception as e:
         logger.error(f'第{index}次交互,地址: {account_address},检测余额失败,耗时{time.time() - current_timestamp}')
@@ -133,11 +135,11 @@ def only_check_gas(arg):
 
 def only_mint(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address}")
+        logger.debug(f"第{index}/{address_num}次交互,地址:{account_address}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -155,11 +157,11 @@ def only_mint(arg):
 
 def only_bend(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address}")
+        logger.debug(f"第{index}/{address_num}次交互,地址:{account_address}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -177,11 +179,11 @@ def only_bend(arg):
 
 def only_deploy_contract(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address}")
+        logger.debug(f"第{index}/{address_num}次交互,地址:{account_address}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -199,11 +201,11 @@ def only_deploy_contract(arg):
 
 def only_dex(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address},rpc: {rpc_url}")
+        logger.debug(f"第{index}/{address_num}次交互,地址:{account_address},rpc: {rpc_url}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -212,7 +214,7 @@ def only_dex(arg):
         balance = bera.get_balance()
         if balance > 0:
             bex_swap(private_key, rpc_url, index, try_times)
-            bex_liquidity(private_key, rpc_url, index, try_times)
+            # bex_liquidity(private_key, rpc_url, index, try_times)
             logger.debug(f'第{index}次交互,{account_address},交互结束,耗时{time.time() - current_timestamp}')
         else:
             logger.error(f'第{index}次交互,{account_address},测试币不足,耗时{time.time() - current_timestamp}')
@@ -222,11 +224,11 @@ def only_dex(arg):
 
 def only_honey(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address},rpc: {rpc_url}")
+        logger.debug(f"第{index}/{address_num}次交互,地址:{account_address},rpc: {rpc_url}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -244,11 +246,11 @@ def only_honey(arg):
 
 def only_send20_create_domain_nft_deploy_contract_bend(arg):
     current_timestamp = time.time()
-    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times = arg
+    index, private_key, rpc_url, proxy_url, solver_provider, client_key, try_times, address_num = arg
     try:
         account = Account.from_key(private_key)
         account_address = account.address
-        logger.debug(f"第{index}次交互,地址:{account_address}")
+        logger.debug(f"第{index}/{address_num}次交互,地址:{account_address}")
         bera = BeraChainTools(private_key=private_key,
                               proxy_url=proxy_url,
                               client_key=client_key,
@@ -459,8 +461,9 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
     logger.debug(f'等待执行任务的地址数为{len(args)}')
     args2 = []
     index = 0
+    address_num = len(args)
     for item in args:
-        args2.append([index, item[0], item[1], item[2], item[3], item[4], item[5]])
+        args2.append([index, item[0], item[1], item[2], item[3], item[4], item[5], address_num])
         index += 1
     # 流程：领水->交互DEX->UDSC兑换Honey->mint三张NFT/域名交互/发送铭文/借贷交互/部署合约
     mode_list = [
@@ -485,7 +488,7 @@ def main(try_times, max_workers, mode_index, test_private_key_show):
 if __name__ == '__main__':
     claim_mode = False  # 只批量领水
     test_private_key_show = ''  # 测试私钥
-    for i in range(3):
+    for i in range(2):
         if claim_mode:
             main(5, 5, 0, test_private_key_show)  # 领水
             break
@@ -495,6 +498,6 @@ if __name__ == '__main__':
         # main(5, 5, 3, test_private_key_show)  # 只mintNFT,要有足够的Honey
         # main(5, 5, 8, test_private_key_show)  # 只发送铭文/只交互域名/只部署合约/只借贷
         #
-        main(5, 12, 11, test_private_key_show)
-        main(5, 12, 9, test_private_key_show)
+        # main(5, 1, 11, test_private_key_show)
+        main(5, 12, 1, test_private_key_show)
         # main(5, 15, 6, test_private_key_show)
